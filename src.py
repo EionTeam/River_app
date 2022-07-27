@@ -4,7 +4,7 @@
 # SRC File for River Runner 
 
 # In[1]:
-
+import os 
 import requests
 import json
 import numpy as np
@@ -108,7 +108,7 @@ def plot_line(ax, ob):
     x, y = ob.xy
     ax.plot(x, y, color='b', alpha=0.7, linewidth=1, solid_capstyle='round', zorder=2)
 
-def find_overlapping_stations(data, base_dir, buffer_rad = 0.01 ):
+def find_overlapping_stations(data, buffer_rad = 0.01 ):
     #Extract coords and convert into geo-df
     coords = [data['features'][i]['geometry']['coordinates'] for i in range(len(data['features'])) ]
     dict = {key: value for (key, value) in zip([i for i in range(len(data['features'])) ] , [LineString(coords[i]) for i in range(len(data['features'])) ] ) }
@@ -122,7 +122,7 @@ def find_overlapping_stations(data, base_dir, buffer_rad = 0.01 ):
     buffer_gdf = gpd.GeoDataFrame(buffer_river , crs='EPSG:4326', geometry=buffer_river ) 
     
     #Find overalapping stations
-    locations = create_filtered_locations(base_dir)
+    locations = create_filtered_locations()
     loc_gdf = gpd.GeoDataFrame(locations , crs='EPSG:4326', geometry=locations['geometry'] )  
     overlap_station =  buffer_gdf.sjoin(loc_gdf, how='inner')[[ 'Latitude', 'Longitude', 'pH', 'dDICdTA' ]]
     overlap_station = overlap_station.drop_duplicates()
@@ -167,16 +167,17 @@ def plot_CRI(CRI, ocean_indx):
     return fig,ax 
 
 
-def load_stations(base_dir):
-    path = base_dir + '/river_app/raw_data/sampling_locations.csv'
+def load_stations():
+    path =  os.path.join(os.path.dirname(__file__),"data/sampling_locations.csv") 
     loc = pd.read_csv(path)
     usloc = loc[loc['Country']=='USA']
     return gpd.GeoDataFrame(usloc, geometry=gpd.points_from_xy(usloc['Longitude'], usloc['Latitude']), crs='EPSG:4326')
     
 
 
-def load_chem(base_dir, locations):
-    uschem = pd.read_csv(base_dir+ '/river_app/raw_data/uschem_pyco2sys.csv')
+def load_chem( locations):
+    path = os.path.join(os.path.dirname(__file__),"data/uschem_pyco2sys.csv")
+    uschem = pd.read_csv(path)
     uschem = uschem.rename(columns={'Alkalinity': 'TA', 'Temp_water': 'T'})
     uschem.loc[:,'RESULT_DATETIME'] = pd.to_datetime(uschem['RESULT_DATETIME'])
     uschem['Q'] = (uschem['RESULT_DATETIME'].dt.month-1)//3
@@ -187,10 +188,10 @@ def load_chem(base_dir, locations):
     return chem[['Y','Q','STAT_ID','RESULT_DATETIME', 'TA', 'T', 'pCO2', 'pH', 'dDICdTA']]
 
      
-def create_filtered_locations(base_dir):
+def create_filtered_locations():
 
-  locations = load_stations(base_dir)
-  chem = load_chem(base_dir, locations)
+  locations = load_stations()
+  chem = load_chem( locations)
 
   pH = chem[['STAT_ID','pH']].groupby(['STAT_ID']).mean()
   CRI = chem[['STAT_ID','dDICdTA']].groupby(['STAT_ID']).mean()
@@ -217,47 +218,6 @@ def create_filtered_locations(base_dir):
 
   return stat_ph_CRI[stat_ph_CRI.index.isin(chem['STAT_ID'])]
 
-# def create_filtered_locations(base_dir):
-#     locations = load_stations(base_dir)
-#     chem = load_chem(base_dir, locations)
-    
-    
-#     pH = chem[['STAT_ID','pH']].groupby(['STAT_ID']).mean()
-#     locations = locations.set_index('STAT_ID')
-#     station_pH = locations.merge(pH, left_index=True, right_index=True)
-
-
-#     # 1. stations with very few data points
-#     station_qa1 = chem[chem['dDICdTA']>0].groupby(['STAT_ID']).count()
-#     qa1 = station_qa1[station_qa1['dDICdTA']<5].index.tolist()
-#     chem = chem[~chem['STAT_ID'].isin(qa1)]
-
-#     # 2. years with only one station 
-#     station_qa2 = chem[chem['dDICdTA']>0].groupby(['Y','Q']).count()
-#     qa2 = station_qa2[station_qa2['dDICdTA']==1].index.tolist()
-#     for Y, Q in qa2:
-#         chem = chem[~((chem['Y']==Y) & (chem['Q']==Q))]
-
-#     # stations with only one year 
-#     station_qa3 = chem[chem['dDICdTA']>0].groupby(['Y','Q','STAT_ID']).count()
-#     station_qa3 = station_qa3.groupby(['STAT_ID']).count()
-#     qa3 = station_qa3[station_qa3['dDICdTA']==1].index.tolist()
-#     chem = chem[~chem['STAT_ID'].isin(qa3)]
-    
-#     return station_pH[station_pH.index.isin(chem['STAT_ID'])]
-
-
-def plot_searoute_stations():
-  address  = input('Enter your address: ')
-  coords = get_coords(address)
-  json_flow = find_downstream_route(coords)
-
-  plot_river_stations(json_flow, base_dir, ph=True)
-
-def find_searoute(): 
-  address  = input('Enter your address: ')
-  coords = get_coords(address)
-  return  find_downstream_route(coords)
 
 
 def get_coords(address):
@@ -265,35 +225,3 @@ def get_coords(address):
   response = requests.get(url).json()
   return ( float(response[0]["lon"]), float(response[0]["lat"]))
 
-
-def plot_map_river(json_flow, coords , buffer):
-  """ 
-  Plot map with json_flow the json of flowlines
-  """
-  base_dir = '/content/gdrive/My Drive'
-  fig = go.Figure(data=[go.Scattermapbox(lat=[0], lon=[0])])
-  
-  overlap_station = find_overlapping_stations( json_flow, base_dir, buffer_rad =buffer)[['Latitude', 'Longitude', 'pH']]
-  overlap_station.pH = overlap_station.pH.round(3)
-  print('num of stations is: {}'.format(len(overlap_station.index.unique())))
-  
-  #add stations
-  fig = px.scatter_mapbox(overlap_station, lat="Latitude", lon="Longitude", hover_name="pH", hover_data=["pH"], color ="pH",
-                          color_continuous_scale="viridis_r" , zoom=4, height=300, opacity = 1, size = [0.5 for i in range(len(overlap_station))] ) # color_discrete_sequence=["fuchsia"]
-  # add flowlines
-  fig.update_layout(
-      margin={"r":0,"t":0,"l":0,"b":0},
-      mapbox=go.layout.Mapbox(
-          style= "open-street-map", 
-          zoom=4, 
-    center_lat = coords[1],
-          center_lon = coords[0],
-          layers=[{
-              'sourcetype': 'geojson',
-              'source': json_flow,
-              'type': 'line',
-            
-          }]
-      )
-  )
-  fig.show()
