@@ -25,10 +25,22 @@ def get_json(url):
     return  response.json()
        
 def plot_line_col(ax, ob, c):
+    """Plot Lines with chosen colours, for shapely Linestring objects 
+    Inputs:
+    ax: axes of fig, ax 
+    ob: linestring
+    c: colour to plot 
+    """
     x, y = ob.xy
     ax.plot(x, y, color=c, alpha=0.7, linewidth=1, solid_capstyle='round', zorder=2)
 
-def plot_line(ax, ob, ):
+def plot_line(ax, ob ):
+    """Plot Lines, for shapely Linestring objects 
+    Inputs:
+    ax: axes of fig, ax 
+    ob: linestring
+     
+    """
     x, y = ob.xy
     ax.plot(x, y, color='b', alpha=0.7, linewidth=1, solid_capstyle='round', zorder=2)
 
@@ -63,7 +75,8 @@ def take_input_coords(coords):
 
 
 def find_downstream_route(coords):
-    """ Retrun the json of the flowlines for the downstream route 
+    """ Retrun the json of the flowlines for the downstream route using the USGS API river; 
+    
     """
     coords = take_input_coords(coords)
     
@@ -100,11 +113,16 @@ def print_downstream():
         plot_line(ax, LineString(coords) )
 
 
-def plot_line(ax, ob):
-    x, y = ob.xy
-    ax.plot(x, y, color='b', alpha=0.7, linewidth=1, solid_capstyle='round', zorder=2)
+# def plot_line(ax, ob):
+#     x, y = ob.xy
+#     ax.plot(x, y, color='b', alpha=0.7, linewidth=1, solid_capstyle='round', zorder=2)
 
 def find_overlapping_stations(data, buffer_rad = 0.01 ):
+    """ FInd stations that overlap with JSON of river lines; using a radius in degrees set by the buffer rad; 
+    Deprecated in favour of using snap points 
+    Inputs:
+    data: json / dict form of river flow lines 
+    """
     #Extract coords and convert into geo-df
     coords = [data['features'][i]['geometry']['coordinates'] for i in range(len(data['features'])) ]
     dict_data = {key: value for (key, value) in zip([i for i in range(len(data['features'])) ] , [LineString(coords[i]) for i in range(len(data['features'])) ] ) }
@@ -129,50 +147,60 @@ def find_overlapping_stations(data, buffer_rad = 0.01 ):
     overlap_station['index'] = [ i+1 for i in range(len(overlap_station)) ]
     return overlap_station
 
-def find_searoute(): 
-  address  = input('Enter your address: ')
-  coords = get_coords(address)
-  return  find_downstream_route(coords)
+# def find_searoute(): 
+#   address  = input('Enter your address: ')
+#   coords = get_coords(address)
+#   return  find_downstream_route(coords)
 
 
 
+# def create_CRI(overlap_station):
+#     """ For the overlapping stations, pull the chemistry data from the glorich Chem River DB and get CRI (dDICdTA). 
+#     Currently uses post-processed data from Adam 
+#     """
+#     CRI = overlap_station[['index', 'dDICdTA']]
+#     ocean = pd.DataFrame( columns =  ('index','dDICdTA' ))
+#     ocean_index = len(CRI)+2
+#     ocean.loc[0]= [ocean_index , 0.85]
 
-def create_CRI(overlap_station):
-    CRI = overlap_station[['index', 'dDICdTA']]
-    ocean = pd.DataFrame( columns =  ('index','dDICdTA' ))
-    ocean_index = len(CRI)+2
-    ocean.loc[0]= [ocean_index , 0.85]
+#     field = pd.DataFrame( columns =  ('index','dDICdTA' ))
+#     field.loc[0]= [0 , 1]
 
-    field = pd.DataFrame( columns =  ('index','dDICdTA' ))
-    field.loc[0]= [0 , 1]
+#     chart = pd.concat([CRI, field, ocean], axis =0 )
+#     return chart.sort_values('index') , ocean_index
 
-    chart = pd.concat([CRI, field, ocean], axis =0 )
-    return chart.sort_values('index') , ocean_index
+# def plot_CRI(CRI, ocean_indx):
+    # """Use to plot the CRI graphs on the streamlit application 
+    # Inputs:
+    # CRI: column of CRI data to be plotted
+    # ocean_indx: number to plot ocean values of (1 after the number of stations)
+    # """
+    # fig,ax = plt.subplots()
+    # ax.plot( CRI['index'], CRI['dDICdTA'])
+    # ax.set_title('Carbon Retention Index (CRI) by Station',
+    #     fontsize='large',
+    #     loc='center',
+    #     fontweight='bold',
+    #     style='normal',
+    #     family='monospace')
+    # # ax.set_suptitle('Index 0 = Field. Final Index = Ocean')
+    # ax.set_xlabel('Station Index (Field = 0. Ocean = {})'.format(ocean_indx) )
+    # ax.set_ylabel('CRI')
+    # #add ocean CRI line 
+    # x = np.linspace(0, ocean_indx+.2)
+    # y = [0.85 for i in range(len(x))]
+    # ax.text(0, 0.855, 'Ocean CRI')
+    # ax.plot(x,y , color = 'r', linestyle = 'dashed')
 
-def plot_CRI(CRI, ocean_indx):
-    fig,ax = plt.subplots()
-    ax.plot( CRI['index'], CRI['dDICdTA'])
-    ax.set_title('Carbon Retention Index (CRI) by Station',
-        fontsize='large',
-        loc='center',
-        fontweight='bold',
-        style='normal',
-        family='monospace')
-    # ax.set_suptitle('Index 0 = Field. Final Index = Ocean')
-    ax.set_xlabel('Station Index (Field = 0. Ocean = {})'.format(ocean_indx) )
-    ax.set_ylabel('CRI')
-    #add ocean CRI line 
-    x = np.linspace(0, ocean_indx+.2)
-    y = [0.85 for i in range(len(x))]
-    ax.text(0, 0.855, 'Ocean CRI')
-    ax.plot(x,y , color = 'r', linestyle = 'dashed')
-
-    ax.grid('on')
+    # ax.grid('on')
     
-    return fig,ax 
+    # return fig,ax 
 
 
 def load_stations():
+    """
+    Load sampling stations; from Glorich global chem database
+    """
     path =  os.path.join(os.path.dirname(__file__),"data/sampling_locations.csv") 
     loc = pd.read_csv(path)
     usloc = loc[loc['Country']=='USA']
@@ -181,6 +209,8 @@ def load_stations():
 
 
 def load_chem( locations):
+    """Load processed file with the dDICdTA info calc by Adam 
+    """
     path = os.path.join(os.path.dirname(__file__),"data/uschem_pyco2sys.csv")
     uschem = pd.read_csv(path)
     uschem = uschem.rename(columns={'Alkalinity': 'TA', 'Temp_water': 'T'})
@@ -194,41 +224,45 @@ def load_chem( locations):
 
      
 def create_filtered_locations():
+    """Filter list of locations based on filters of clean data 
+    TODO update this to just be a file? 
+    """
+    locations = load_stations()
+    chem = load_chem( locations)
 
-  locations = load_stations()
-  chem = load_chem( locations)
+    pH = chem[['STAT_ID','pH']].groupby(['STAT_ID']).mean()
+    CRI = chem[['STAT_ID','dDICdTA']].groupby(['STAT_ID']).mean()
+    locations = locations.set_index('STAT_ID')
+    station_pH = locations.merge(pH, left_index=True, right_index=True)
+    stat_ph_CRI = station_pH.merge(CRI, left_index=True, right_index=True)
 
-  pH = chem[['STAT_ID','pH']].groupby(['STAT_ID']).mean()
-  CRI = chem[['STAT_ID','dDICdTA']].groupby(['STAT_ID']).mean()
-  locations = locations.set_index('STAT_ID')
-  station_pH = locations.merge(pH, left_index=True, right_index=True)
-  stat_ph_CRI = station_pH.merge(CRI, left_index=True, right_index=True)
+    # 1. stations with very few data points
+    station_qa1 = chem[chem['dDICdTA']>0].groupby(['STAT_ID']).count()
+    qa1 = station_qa1[station_qa1['dDICdTA']<5].index.tolist()
+    chem = chem[~chem['STAT_ID'].isin(qa1)]
 
-  # 1. stations with very few data points
-  station_qa1 = chem[chem['dDICdTA']>0].groupby(['STAT_ID']).count()
-  qa1 = station_qa1[station_qa1['dDICdTA']<5].index.tolist()
-  chem = chem[~chem['STAT_ID'].isin(qa1)]
+    # 2. years with only one station 
+    station_qa2 = chem[chem['dDICdTA']>0].groupby(['Y','Q']).count()
+    qa2 = station_qa2[station_qa2['dDICdTA']==1].index.tolist()
+    for Y, Q in qa2:
+        chem = chem[~((chem['Y']==Y) & (chem['Q']==Q))]
 
-  # 2. years with only one station 
-  station_qa2 = chem[chem['dDICdTA']>0].groupby(['Y','Q']).count()
-  qa2 = station_qa2[station_qa2['dDICdTA']==1].index.tolist()
-  for Y, Q in qa2:
-      chem = chem[~((chem['Y']==Y) & (chem['Q']==Q))]
+    # stations with only one year 
+    station_qa3 = chem[chem['dDICdTA']>0].groupby(['Y','Q','STAT_ID']).count()
+    station_qa3 = station_qa3.groupby(['STAT_ID']).count()
+    qa3 = station_qa3[station_qa3['dDICdTA']==1].index.tolist()
+    chem = chem[~chem['STAT_ID'].isin(qa3)]
 
-  # stations with only one year 
-  station_qa3 = chem[chem['dDICdTA']>0].groupby(['Y','Q','STAT_ID']).count()
-  station_qa3 = station_qa3.groupby(['STAT_ID']).count()
-  qa3 = station_qa3[station_qa3['dDICdTA']==1].index.tolist()
-  chem = chem[~chem['STAT_ID'].isin(qa3)]
-
-  return stat_ph_CRI[stat_ph_CRI.index.isin(chem['STAT_ID'])]
+    return stat_ph_CRI[stat_ph_CRI.index.isin(chem['STAT_ID'])]
 
 
 
 def get_coords(address):
-  url = 'https://nominatim.openstreetmap.org/search/' + urllib.parse.quote(address) +'?format=json'
-  response = requests.get(url).json()
-  return ( float(response[0]["lon"]), float(response[0]["lat"]))
+    """use Open streem map to get lat lon coords from address that user will give on stremalit app 
+    """
+    url = 'https://nominatim.openstreetmap.org/search/' + urllib.parse.quote(address) +'?format=json'
+    response = requests.get(url).json()
+    return ( float(response[0]["lon"]), float(response[0]["lat"]))
 
 
 def find_oean_point(data):
@@ -272,6 +306,8 @@ def generate_field_point():
 
 
 def get_river_df_utm(data):
+    """Process the JSON version of river flowlines data into nice GeoPandas dataframe; reused multiple times 
+    """
     utm = pyproj.CRS('EPSG:26907')
     coords = [data['features'][i]['geometry']['coordinates'] for i in range(len(data['features'])) ]
     dict_data = {key: value for (key, value) in zip([i for i in range(len(data['features'])) ] , [LineString(coords[i]) for i in range(len(data['features'])) ] ) }
@@ -281,16 +317,25 @@ def get_river_df_utm(data):
 
 def snap_points(data,  offset = 1000):
     """Generate the snapped points to the river for stations, uses https://medium.com/@brendan_ward/how-to-leverage-geopandas-for-faster-snapping-of-points-to-lines-6113c94e59aa
+    Converts into UTM projected coords and then takes a radius of 1km 
     """
 
     utm = pyproj.CRS('EPSG:26907')
 
     lines = get_river_df_utm(data)
 
+    # get time to ocean based on all lines and speed of 1.2MPH / 1.93 KMPH
+    len_lines = [x.length for x in lines.geometry]
+    lines['len_lines'] = len_lines
+    speed_per_week_km = 1.93 * 24 * 7
+    len_to_ocean_km = lines.len_lines.sum()/1000
+    time_to_ocean = len_to_ocean_km/speed_per_week_km
+    
+    #get locations 
     locations = create_filtered_locations()
     locations = locations.to_crs(utm)
     points = gpd.GeoDataFrame(locations , crs=utm, geometry=locations['geometry'] )  
-    print(points.crs, lines.crs)
+    # print(points.crs, lines.crs)
 
     bbox = points.geometry.bounds + [-offset, -offset, offset, offset]
     hits = bbox.apply(lambda row: [x for x in lines.sindex.intersection(row)], axis=1)
@@ -344,33 +389,45 @@ def snap_points(data,  offset = 1000):
     updated_points= gpd.GeoDataFrame( updated_points, geometry =updated_points['geometry'], crs=utm)
     # updated_points = updated_points.set_crs(utm)
     # You may want to drop any that didn't snap, if so:
-    updated_points = updated_points.dropna(subset=['pH', 'dDICdTA', "geometry"])
+    updated_points = updated_points.dropna(subset=['STATION_NAME','STATION_ID_ORIG','pH', 'dDICdTA', "geometry"])
     updated_points= updated_points.to_crs('EPSG:4326')
     updated_points['index'] = [i+1 for i in range(len(updated_points)) ]
    
-    overlap = updated_points.loc[:, ['index', 'geometry', 'pH', 'dDICdTA']]
+    overlap = updated_points.loc[:, ['index','STATION_NAME','STATION_ID_ORIG', 'geometry', 'pH', 'dDICdTA']]
     overlap['Longitude']= [point.x for point in overlap['geometry']]
     overlap['Latitude']=[point.y for point in overlap['geometry'] ]
     overlap.drop(columns= 'geometry', inplace=True)
     
-    return updated_points, overlap
+    return updated_points, overlap, time_to_ocean
 
 def find_CRI_years():
+    """ Takes valid station ids of sampling locations, and returns the yearly mean values of CRI for these stations
+    __ this could also be replaced with singular file 
+    """
     locations = load_stations()
     valid_ids = locations.index.unique().tolist()
-    chem=load_chem(locations)
+    chem= load_chem(locations)
     q_CRI = chem[['STAT_ID','Y', 'dDICdTA']].groupby(['STAT_ID',  'Y']).mean().dropna()
     return q_CRI.reset_index(level=[1])
 
 
 def create_multi_CRI(data):
-    loc, _= snap_points(data)
+    """ Create the mutli-CRI plots to use in streamlit app from the json form of the river flowlines 
+    Filter to at least three data points to include a year. Check how many years the CRI falls below the ocean CRI 
+    Returns: the fig to plot and the num of years it dropped 
+    Inputs:
+    data: json form of flowlines river data
+    """
+    #Get nearby sampling stations
+    loc, _, _= snap_points(data)
     loc['index_plot']= [i +1 for i in range(len(loc))]
     
+    # Get the yearly values of CRI for these statiosn 
     q_CRI = find_CRI_years()
     join = loc.join(q_CRI, lsuffix='l')
     
     year = join.groupby('Y').count()
+    #filter to 3 data points 
     populated = year[year['pH'] >3].index.tolist()
     
     fig, ax = plt.subplots(figsize=(7,5) )
