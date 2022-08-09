@@ -20,11 +20,11 @@ st.title('Eion Carbon Removal Verification')
 def find_map(coords):
     json_flow = find_downstream_route(coords)
     # overlap_station = find_overlapping_stations( json_flow, buffer_rad =buffer)
-    _, overlap_station = snap_points(json_flow)
+    _, overlap_station, time_to_ocean = snap_points(json_flow)
     name_df = overlap_station.reset_index()
     name_df['hover_text']  =['Name: {}, Station ID: {},  USGS ID : {}, Index : {}'.format(a,b,c,d) for a,b,c,d in zip(name_df['STATION_NAME'], name_df['STATION_ID_ORIG'], name_df['STAT_ID'], name_df['index'])]
     name_df['url'] = ['https://waterdata.usgs.gov/monitoring-location/{}/'.format(('0'+ str(x)) ) for x in name_df['STATION_ID_ORIG']]
-    url_df = name_df[['index', 'STATION_ID_ORIG', 'url']]
+    url_df = name_df[['index', 'STATION_ID_ORIG', 'url', 'STATION_NAME']]
     # name_df['hover_text']  =['Name: {}, Station ID: {},  USGS ID : {}{}, Index : {}'.format(a,b,c,d,e) for a,b,c,d ,e in zip(name_df['STATION_NAME'], name_df['STATION_ID_ORIG'], name_df['STAT_ID'],name_df['url'],  name_df['index'])]
     # CRI , ocean_index =create_CRI(overlap_station)
     
@@ -39,7 +39,7 @@ def find_map(coords):
     mapboxt = 'MapBox Token'
 
     # define layers and plot map
-    scatt = go.Scattermapbox(lat=name_df['Latitude'], lon=name_df['Longitude'],mode='markers+text',  
+    scatt = go.Scattermapbox(lat=name_df['Latitude'], lon=name_df['Longitude'],mode='markers+text', name ='pH' ,
         below='False', hovertext = name_df['hover_text'],  marker=go.scattermapbox.Marker(
             autocolorscale=False,
             showscale=True,
@@ -48,8 +48,9 @@ def find_map(coords):
             color=name_df['pH'],
             colorscale='viridis_r', 
         )) #  
+    
 
-    field_loc = go.Scattermapbox(lat=[cross_lat, o_lat], lon=[cross_lon, o_lon],mode='markers+text',    
+    field_loc = go.Scattermapbox(lat=[cross_lat, o_lat], lon=[cross_lon, o_lon],mode='markers+text',   name = '', 
         below='False', opacity =1, marker=go.scattermapbox.Marker(
             autocolorscale=False,
             # showscale=True,
@@ -72,6 +73,8 @@ def find_map(coords):
 
     # assign Graph Objects figure
     fig = go.Figure(data=layer1, layout=layout )
+    
+    
 
     #update with the river layer
     fig.update_layout( margin={"r":0,"t":0,"l":0,"b":0}, mapbox=go.layout.Mapbox(style= "open-street-map", zoom=4, 
@@ -87,7 +90,8 @@ def find_map(coords):
         }]
     )
     )
-    return fig, fig_cri_multi, num_drops, url_df
+    # fig.update_traces(name=  'pH', selector=dict(type='scattermapbox'))
+    return fig, fig_cri_multi, num_drops, url_df, time_to_ocean
 
 
 
@@ -105,26 +109,40 @@ rand_b = st.button('Take me to an interesting point', key='rand')
 
 
 
-def main(fig, fig_cri, num_drops):
+def main(coords):
+        fig, fig_cri, num_drops, url_df, time_to_ocean  = find_map(coords)
     # display streamlit map
-        st.plotly_chart(fig)
-        with st.container():
-            st.markdown('----')
-            st.markdown('### DIC trapped in water from this point risks escape to the atmosphere *{}* times.'.format(num_drops))
-            st.pyplot(fig_cri)
-            st.markdown('----')
-            st.write("Sources: Data is sourced from USGS's [NLDI API](https://waterdata.usgs.gov/blog/nldi-intro/) and the [GLORICH](https://www.geo.uni-hamburg.de/en/geologie/forschung/aquatische-geochemie/glorich.html) Global River Chemistry Database.")
+        tab1, tab2, tab3  = st.tabs(["Map", "Carbon Retention", "Station Links"])
 
+        with tab1:
+            
+            st.plotly_chart(fig)
+
+        with tab2: 
+            with st.container():
+                # st.markdown('----')
+                st.markdown('#### DIC trapped in water from this point risks escape to the atmosphere *{}* times.'.format(num_drops))
+                st.markdown('##### Estimated travel time to ocean after reaching waterway is {} weeks'.format(time_to_ocean.round(1)))
+                st.pyplot(fig_cri)
+                # st.markdown('----')
+
+        with tab3:
+            st.header("Sampling stations")
+            with st.container():
+                for index, id, url , name in zip(url_df['index'], url_df['STATION_ID_ORIG'], url_df['url'] , url_df['STATION_NAME']):
+                    st.write('{} {} ({})'.format(index, name, url))
+
+        st.write("Sources: Data is sourced from USGS's [NLDI API](https://waterdata.usgs.gov/blog/nldi-intro/) and the [GLORICH](https://www.geo.uni-hamburg.de/en/geologie/forschung/aquatische-geochemie/glorich.html) Global River Chemistry Database.")
+      
+        
+        
 
 while True:    
     num = st.session_state.num
 
     if go_b:
         coords = get_coords(address)
-        print(coords)
-        fig, fig_cri, num_drops, url_df  = find_map(coords)
-        
-        main(fig, fig_cri, num_drops)
+        main(coords)
   
         st.session_state.num += 2
         
@@ -132,10 +150,7 @@ while True:
     elif rand_b:
         coords = generate_field_point()
         print(coords)
-
-        fig, fig_cri, num_drops, url_df  = find_map(coords)
- 
-        main(fig, fig_cri, num_drops)
+        main(coords)
  
         st.session_state.num += 2
         
