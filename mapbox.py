@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import pandas as pd 
 import numpy as np
 
-from src import find_overlapping_stations, load_stations, generate_field_point,  get_coords, find_downstream_route, find_oean_point
+from src import get_CRI_ocean, get_ocean_nodes, find_overlapping_stations, load_stations, generate_field_point,  get_coords, find_downstream_route, find_oean_point
 from src import create_multi_CRI , snap_points
 
 buffer = 0.009
@@ -19,16 +19,20 @@ st.title('Eion Carbon Removal Verification')
 # st.subheader()
 def find_map(coords):
     json_flow = find_downstream_route(coords)
-    # overlap_station = find_overlapping_stations( json_flow, buffer_rad =buffer)
+    
     _, overlap_station, time_to_ocean = snap_points(json_flow)
+    
     name_df = overlap_station.reset_index()
     name_df['hover_text']  =['Name: {}, Station ID: {},  USGS ID : {}, Index : {}'.format(a,b,c,d) for a,b,c,d in zip(name_df['STATION_NAME'], name_df['STATION_ID_ORIG'], name_df['STAT_ID'], name_df['index'])]
     name_df['url'] = ['https://waterdata.usgs.gov/monitoring-location/{}/'.format(('0'+ str(x)) ) for x in name_df['STATION_ID_ORIG']]
     url_df = name_df[['index', 'STATION_ID_ORIG', 'url', 'STATION_NAME']]
-    # name_df['hover_text']  =['Name: {}, Station ID: {},  USGS ID : {}{}, Index : {}'.format(a,b,c,d,e) for a,b,c,d ,e in zip(name_df['STATION_NAME'], name_df['STATION_ID_ORIG'], name_df['STAT_ID'],name_df['url'],  name_df['index'])]
-    # CRI , ocean_index =create_CRI(overlap_station)
+    data_plot = name_df[['Latitude', 'Longitude', 'pH', 'hover_text']]
     
-    fig_cri_multi, num_drops = create_multi_CRI(json_flow, )
+    CRI_ocean,  ocean_ph = get_CRI_ocean(json_flow, overlap_station)
+    df_plot = pd.concat([data_plot, ocean_ph], axis =0)
+
+    fig_cri_multi, num_drops = create_multi_CRI(json_flow,CRI_ocean )
+    
     #coords for X on map and ocean point
     cross_lon, cross_lat = coords[0], coords[1]
 
@@ -39,26 +43,28 @@ def find_map(coords):
     mapboxt = 'MapBox Token'
 
     # define layers and plot map
-    scatt = go.Scattermapbox(lat=name_df['Latitude'], lon=name_df['Longitude'],mode='markers+text', name ='pH' ,
-        below='False', hovertext = name_df['hover_text'],  marker=go.scattermapbox.Marker(
+    scatt = go.Scattermapbox(lat=df_plot['Latitude'], lon=df_plot['Longitude'],mode='markers+text', name ='pH' ,
+        below='False', hovertext = df_plot['hover_text'],  marker=go.scattermapbox.Marker(
             autocolorscale=False,
             showscale=True,
             size=10,
             opacity=1,
-            color=name_df['pH'],
+            color=df_plot['pH'],
             colorscale='viridis_r', 
         )) #  
     
 
-    field_loc = go.Scattermapbox(lat=[cross_lat, o_lat], lon=[cross_lon, o_lon],mode='markers+text',   name = '', 
+    field_loc = go.Scattermapbox(lat=[cross_lat], lon=[cross_lon],mode='markers+text', name = '', 
         below='False', opacity =1, marker=go.scattermapbox.Marker(
             autocolorscale=False,
             # showscale=True,
             size=10,
             opacity=1,
-            color='red' 
+            color='red' ,
+            
             
         ))
+
 
     layout = go.Layout(title_text ='Sampling locations', title_x =0.5,  
         width=950, height=700,mapbox = dict(center= dict(lat=37,  

@@ -7,9 +7,11 @@
 
 import os
 import urllib.parse
+import streamlit as st
 
 import geopandas as gpd
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 import numpy as np
 import pandas as pd
 import requests
@@ -18,7 +20,8 @@ import shapely as sh
 import random
 from matplotlib.pyplot import cm
 import pyproj
-
+from shapely.geometry import Point, LineString
+utm = pyproj.CRS('EPSG:26907')
 
 def get_json(url):
     response = requests.get(url)
@@ -147,56 +150,7 @@ def find_overlapping_stations(data, buffer_rad = 0.01 ):
     overlap_station['index'] = [ i+1 for i in range(len(overlap_station)) ]
     return overlap_station
 
-# def find_searoute(): 
-#   address  = input('Enter your address: ')
-#   coords = get_coords(address)
-#   return  find_downstream_route(coords)
-
-
-
-# def create_CRI(overlap_station):
-#     """ For the overlapping stations, pull the chemistry data from the glorich Chem River DB and get CRI (dDICdTA). 
-#     Currently uses post-processed data from Adam 
-#     """
-#     CRI = overlap_station[['index', 'dDICdTA']]
-#     ocean = pd.DataFrame( columns =  ('index','dDICdTA' ))
-#     ocean_index = len(CRI)+2
-#     ocean.loc[0]= [ocean_index , 0.85]
-
-#     field = pd.DataFrame( columns =  ('index','dDICdTA' ))
-#     field.loc[0]= [0 , 1]
-
-#     chart = pd.concat([CRI, field, ocean], axis =0 )
-#     return chart.sort_values('index') , ocean_index
-
-# def plot_CRI(CRI, ocean_indx):
-    # """Use to plot the CRI graphs on the streamlit application 
-    # Inputs:
-    # CRI: column of CRI data to be plotted
-    # ocean_indx: number to plot ocean values of (1 after the number of stations)
-    # """
-    # fig,ax = plt.subplots()
-    # ax.plot( CRI['index'], CRI['dDICdTA'])
-    # ax.set_title('Carbon Retention Index (CRI) by Station',
-    #     fontsize='large',
-    #     loc='center',
-    #     fontweight='bold',
-    #     style='normal',
-    #     family='monospace')
-    # # ax.set_suptitle('Index 0 = Field. Final Index = Ocean')
-    # ax.set_xlabel('Station Index (Field = 0. Ocean = {})'.format(ocean_indx) )
-    # ax.set_ylabel('CRI')
-    # #add ocean CRI line 
-    # x = np.linspace(0, ocean_indx+.2)
-    # y = [0.85 for i in range(len(x))]
-    # ax.text(0, 0.855, 'Ocean CRI')
-    # ax.plot(x,y , color = 'r', linestyle = 'dashed')
-
-    # ax.grid('on')
-    
-    # return fig,ax 
-
-
+@st.cache 
 def load_stations():
     """
     Load sampling stations; from Glorich global chem database
@@ -207,7 +161,7 @@ def load_stations():
     return gpd.GeoDataFrame(usloc, geometry=gpd.points_from_xy(usloc['Longitude'], usloc['Latitude']), crs='EPSG:4326')
     
 
-
+@st.cache 
 def load_chem( locations):
     """Load processed file with the dDICdTA info calc by Adam 
     """
@@ -222,7 +176,7 @@ def load_chem( locations):
 
     return chem[['Y','Q','STAT_ID','RESULT_DATETIME', 'TA', 'T', 'pCO2', 'pH', 'dDICdTA']]
 
-     
+@st.cache     
 def create_filtered_locations():
     """Filter list of locations based on filters of clean data 
     TODO update this to just be a file? 
@@ -275,11 +229,23 @@ def find_oean_point(data):
     f,l = line.boundary.geoms
     return l.xy
 
+
+
 def random_point_mis_basin():
     minx, miny, maxx, maxy = -113.938141, 37.5, -77.83937, 49.73911
     x = random.uniform(minx, maxx)
     y = random.uniform(miny, maxy)
     return sh.geometry.Point(x,y)
+
+@st.cache
+def open_missipi_sh_file():
+    basin_sh =  os.path.join(os.path.dirname(__file__),'data/Miss_RiverBasin/Miss_RiverBasin.shp')
+    basin = gpd.read_file(basin_sh)
+    basin =  basin.to_crs('EPSG:4326')
+    buff_basin = basin.buffer(-1)
+    buff_basin.to_crs('EPSG:4326')
+    buffer_gdf = gpd.GeoDataFrame(buff_basin , crs='EPSG:4326', geometry=buff_basin ) 
+    return buffer_gdf
 
 def generate_field_point():
     """Generates random point in Missipi basin, filters using shapefile 
@@ -288,14 +254,7 @@ def generate_field_point():
         point= random_point_mis_basin()
         p_df = gpd.GeoDataFrame(geometry=gpd.GeoSeries( point) ).set_crs( crs = 'EPSG:4326')
         p_df =  p_df.to_crs( crs = 'EPSG:4326')
-
-        basin_sh =  os.path.join(os.path.dirname(__file__),'data/Miss_RiverBasin/Miss_RiverBasin.shp')
-        basin = gpd.read_file(basin_sh)
-        basin =  basin.to_crs('EPSG:4326')
-        buff_basin = basin.buffer(-1)
-        buff_basin.to_crs('EPSG:4326')
-        buffer_gdf = gpd.GeoDataFrame(buff_basin , crs='EPSG:4326', geometry=buff_basin ) 
-
+        buffer_gdf = open_missipi_sh_file()
 
         overlap = buffer_gdf.sjoin(p_df)
         if len(overlap) != 0:
@@ -411,7 +370,7 @@ def find_CRI_years():
     return q_CRI.reset_index(level=[1])
 
 
-def create_multi_CRI(data):
+def create_multi_CRI(json_flow, CRI_ocean):
     """ Create the mutli-CRI plots to use in streamlit app from the json form of the river flowlines 
     Filter to at least three data points to include a year. Check how many years the CRI falls below the ocean CRI 
     Returns: the fig to plot and the num of years it dropped 
@@ -419,39 +378,140 @@ def create_multi_CRI(data):
     data: json form of flowlines river data
     """
     #Get nearby sampling stations
-    loc, _, _= snap_points(data)
+    loc, _, _= snap_points(json_flow)
     loc['index_plot']= [i +1 for i in range(len(loc))]
-    
+
     # Get the yearly values of CRI for these statiosn 
     q_CRI = find_CRI_years()
     join = loc.join(q_CRI, lsuffix='l')
-    
+
     year = join.groupby('Y').count()
     #filter to 3 data points 
     populated = year[year['pH'] >3].index.tolist()
-    
-    fig, ax = plt.subplots(figsize=(7,5) )
-    ax.set_title('Carbon Retention Index (CRI) by Station',
-        fontsize='medium',
-        loc='center',
+
+    fig, ax = plt.subplots(figsize= (10,6))
+
+    cmap = plt.cm.twilight_shifted
+    norm = mpl.colors.Normalize(vmin=int(populated[0]), vmax=int(populated[-1]) )
+    sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
+
+
+    fig.suptitle('DIC Retention Index (DRI) by Station',
+        fontsize='large',
+        # loc='center',
         # fontweight='normal',
         style='normal',
         family='monospace')
     # ax.set_suptitle('Index 0 = Field. Final Index = Ocean')
-    
+
     ocean_indx= len(loc)+1
-    ax.set_xlabel('Station Index (Field = 0. Ocean = {})'.format(ocean_indx) )
-    ax.set_ylabel('CRI')
+    oc, *oc2 = [x for x in range( ocean_indx, ocean_indx+6)]
+
+
+    ax.set_xlabel('Station Index (Field = 0)'.format(ocean_indx) )
+    ax.set_ylabel('DRI')
+
     num_drops=0
     for y in populated:
         data= join[join.Y == y]
+        color=cmap(norm(y))
+        if y in (1980, 1981):
+            y = 1982
+        ocean_data= CRI_ocean[CRI_ocean.Y == y]
+    
         a,*b =  data.index_plot.values.tolist()
         c,*d =  data.dDICdTA.values.tolist()
-        ax.plot([0,a,*b, ocean_indx], [1, c, *d, 0.85], label=y, alpha=0.5)
+        oc_c, * oc_cri = ocean_data.dDICdTA.values.tolist()
+
+        ax.plot([0,a,*b], [1, c, *d,  ], label=y, alpha=0.8, c= color )
+        
+        ax.plot([oc, *oc2], [  oc_c, * oc_cri], label=y, alpha=0.8, c= color)
         min = data.dDICdTA.values.min()
         if min < 0.85:
             num_drops+=1 
- 
-    leg = ax.legend(bbox_to_anchor=(1.05, 1.05))
-    
+
+    # leg = ax.legend(bbox_to_anchor=(1.15, 1.05))
+    plt.text( 8.5, 1, 'Line represent distinct years between 1980-2007', bbox=dict(facecolor='thistle', alpha=0.3))
+    plt.text( 4.5, 0.94, 'RIVER', horizontalalignment='center')
+    plt.text( 9.5, 0.91, 'OCEAN', horizontalalignment='center')
+    # plt.tight_layout()
     return fig , num_drops
+
+
+def process_river(data): 
+    coords = [data['features'][i]['geometry']['coordinates'] for i in range(len(data['features'])) ]
+    dict_data = {key: value for (key, value) in zip([i for i in range(len(data['features'])) ] , [LineString(coords[i]) for i in range(len(data['features'])) ] ) }
+    river_df = pd.DataFrame(dict_data, index=['geometry']).T
+    river_gdf = gpd.GeoDataFrame(river_df , crs='EPSG:4326', geometry=river_df['geometry'] )
+    river_gdf.to_crs('EPSG:4326')
+    return river_gdf
+    
+    
+def getExtrapoledLine(p1,p2):
+    'Creates a line extrapoled in p1->p2 direction. input points need to be in utm coords. this creates line 500 km out'
+    dist = p1.distance(p2) 
+    EXTRAPOL_RATIO = 500000 / dist 
+    a = p2
+    b = (p2.x+EXTRAPOL_RATIO*(p2.x-p1.x), p2.y+EXTRAPOL_RATIO*(p2.y-p1.y) )
+    return LineString([a,b])
+
+
+# def get_ocean_point(data):
+#     river_gdf = process_river(data)
+#     line = river_gdf.iloc[-1]['geometry']
+#     f,l = line.boundary.geoms
+
+
+def get_ocean_nodes(data, df_loc):
+    
+    river_gdf = process_river(data)
+    river_utm = river_gdf.to_crs(utm)
+    _ ,ocean = river_utm.iloc[-1].geometry.boundary.geoms
+    
+    
+    df_loc['geometry'] = [Point(lon, lat) for lon, lat in zip(df_loc['Longitude'],df_loc['Latitude']  )]
+    df_utm = df_loc.to_crs(utm)
+    final_station =  df_utm.iloc[-1].geometry
+    
+    extend = getExtrapoledLine(final_station,ocean)
+    km = 1000
+    one, two, three, four,five = extend.interpolate(100*km), extend.interpolate(200 *km ), extend.interpolate(300*km), extend.interpolate(400*km) , extend.interpolate(500*km)                                                                                                                              
+    points = [ocean, one, two, three, four,five]
+    new_nodes = gpd.GeoDataFrame(geometry = points, crs = utm)
+    new_nodes = new_nodes.to_crs("EPSG:4326")  
+    
+    return new_nodes
+
+
+@st.cache
+def load_ocean_grid_carbonate_data():
+    path = os.path.join(os.path.dirname(__file__),"data//ocean_grid") 
+    gdf = gpd.read_file(path)
+    return gdf
+
+
+def get_CRI_ocean(json_flow, overlap_station):
+    """Pull the geogrid data for ocean sampling and ocean ph for the 5 ocean stations + mouth of river
+    """
+    #Load processed Grid Cabonate data
+    gdf = load_ocean_grid_carbonate_data
+    
+    #Find extended 5 stations 
+    ocean_stations = get_ocean_nodes(json_flow, overlap_station)
+    
+    CRI_ocean = pd.DataFrame(columns = ['Y', 'dDICdTA', ])
+                         
+    for point in ocean_stations.geometry:
+        
+        gdf['dist'] = [x.distance(point) for x in gdf.geometry ]
+        test = gdf[gdf['dist'] == gdf['dist'].min()][['Y', 'dDICdTA', 'ph_total']]
+        test['geometry'] = point
+        
+        CRI_ocean= pd.concat([CRI_ocean,test],axis =0)    
+    CRI_ocean['Latitude'] = [x.y for x in CRI_ocean.geometry]
+    CRI_ocean['Longitude'] = [x.x for x in CRI_ocean.geometry]
+    
+    ocean_ph = CRI_ocean[[ 'Latitude','Longitude', 'ph_total']].groupby([ 'Longitude', 'Latitude']).mean().reset_index()
+    ocean_ph['hover_text'] = ['Ocean Sample, pH: {}'.format(ph) for ph in ocean_ph['ph_total'].round(1) ]
+    ocean_ph.rename(columns={ 'ph_total': 'pH'}, inplace=True )
+    return CRI_ocean,  ocean_ph 
