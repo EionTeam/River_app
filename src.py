@@ -176,7 +176,7 @@ def load_chem( locations):
 
     return chem[['Y','Q','STAT_ID','RESULT_DATETIME', 'TA', 'T', 'pCO2', 'pH', 'dDICdTA']]
 
-   
+@st.cache  
 def create_filtered_locations():
     """Filter list of locations based on filters of clean data 
     TODO update this to just be a file? 
@@ -237,7 +237,7 @@ def random_point_mis_basin():
     y = random.uniform(miny, maxy)
     return sh.geometry.Point(x,y)
 
-
+@st.cache  
 def open_missipi_sh_file():
     basin_sh =  os.path.join(os.path.dirname(__file__),'data/Miss_RiverBasin/Miss_RiverBasin.shp')
     basin = gpd.read_file(basin_sh)
@@ -485,7 +485,7 @@ def get_ocean_nodes(data, df_loc):
 
 
 def load_ocean_grid_carbonate_data():
-    path = os.path.join(os.path.dirname(__file__),"data//ocean_grid") 
+    path = os.path.join(os.path.dirname(__file__),"data/ocean_grid/ocean_carbonate_grid_data.shp") 
     gdf = gpd.read_file(path)
     return gdf
 
