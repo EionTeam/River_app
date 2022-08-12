@@ -456,11 +456,6 @@ def getExtrapoledLine(p1,p2):
     return LineString([a,b])
 
 
-# def get_ocean_point(data):
-#     river_gdf = process_river(data)
-#     line = river_gdf.iloc[-1]['geometry']
-#     f,l = line.boundary.geoms
-
 
 def get_ocean_nodes(data, df_loc):
     
@@ -483,7 +478,7 @@ def get_ocean_nodes(data, df_loc):
     return new_nodes
 
 
-
+@st.cache  
 def load_ocean_grid_carbonate_data():
     path = os.path.join(os.path.dirname(__file__),"data/ocean_grid/ocean_carbonate_grid_data.shp") 
     gdf = gpd.read_file(path)
