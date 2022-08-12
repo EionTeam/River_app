@@ -150,7 +150,7 @@ def find_overlapping_stations(data, buffer_rad = 0.01 ):
     overlap_station['index'] = [ i+1 for i in range(len(overlap_station)) ]
     return overlap_station
 
-@st.cache 
+
 def load_stations():
     """
     Load sampling stations; from Glorich global chem database
@@ -161,7 +161,7 @@ def load_stations():
     return gpd.GeoDataFrame(usloc, geometry=gpd.points_from_xy(usloc['Longitude'], usloc['Latitude']), crs='EPSG:4326')
     
 
-@st.cache 
+
 def load_chem( locations):
     """Load processed file with the dDICdTA info calc by Adam 
     """
@@ -176,7 +176,7 @@ def load_chem( locations):
 
     return chem[['Y','Q','STAT_ID','RESULT_DATETIME', 'TA', 'T', 'pCO2', 'pH', 'dDICdTA']]
 
-@st.cache     
+   
 def create_filtered_locations():
     """Filter list of locations based on filters of clean data 
     TODO update this to just be a file? 
@@ -237,7 +237,7 @@ def random_point_mis_basin():
     y = random.uniform(miny, maxy)
     return sh.geometry.Point(x,y)
 
-@st.cache
+
 def open_missipi_sh_file():
     basin_sh =  os.path.join(os.path.dirname(__file__),'data/Miss_RiverBasin/Miss_RiverBasin.shp')
     basin = gpd.read_file(basin_sh)
@@ -483,7 +483,7 @@ def get_ocean_nodes(data, df_loc):
     return new_nodes
 
 
-@st.cache
+
 def load_ocean_grid_carbonate_data():
     path = os.path.join(os.path.dirname(__file__),"data//ocean_grid") 
     gdf = gpd.read_file(path)
@@ -494,11 +494,11 @@ def get_CRI_ocean(json_flow, overlap_station):
     """Pull the geogrid data for ocean sampling and ocean ph for the 5 ocean stations + mouth of river
     """
     #Load processed Grid Cabonate data
-    gdf = load_ocean_grid_carbonate_data
-    
+    gdf = load_ocean_grid_carbonate_data()
+    print(gdf)
     #Find extended 5 stations 
     ocean_stations = get_ocean_nodes(json_flow, overlap_station)
-    
+    print(ocean_stations)
     CRI_ocean = pd.DataFrame(columns = ['Y', 'dDICdTA', ])
                          
     for point in ocean_stations.geometry:
