@@ -144,7 +144,7 @@ def main(coords):
                     for index, id, url , name in zip(url_df['index'], url_df['STATION_ID_ORIG'], url_df['url'] , url_df['STATION_NAME']):
                         st.write('{} {} ({})'.format(index, name, url))
 
-            st.write("Sources: River data is sourced from USGS's [NLDI API](https://waterdata.usgs.gov/blog/nldi-intro/) and the [GLORICH](https://www.geo.uni-hamburg.de/en/geologie/forschung/aquatische-geochemie/glorich.html) Global River Chemistry Database. Ocean data is sourced from [NOAA National Centers for Environmental Information Dataset.](https://www.ncei.noaa.gov/access/metadata/landing-page/bin/iso?id=gov.noaa.nodc:0220059)")
+            st.write("Sources: River data is sourced from USGS's [NLDI API](https://waterdata.usgs.gov/blog/nldi-intro/) and the [GLORICH](https://www.geo.uni-hamburg.de/en/geologie/forschung/aquatische-geochemie/glorich.html) Global River Chemistry Database. Ocean data is sourced from [NOAA](https://www.ncei.noaa.gov/access/metadata/landing-page/bin/iso?id=gov.noaa.nodc:0220059)")
         
         
         
