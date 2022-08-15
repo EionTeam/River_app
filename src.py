@@ -395,7 +395,7 @@ def create_multi_CRI(json_flow, CRI_ocean):
 
     year = join.groupby('Y').count()
     #filter to 3 data points 
-    populated = year[year['pH'] >1].index.tolist()
+    populated = year[year['pH'] >2].index.tolist()
     if len(populated) !=0 :
         
         fig, ax = plt.subplots(figsize= (10,6))
@@ -419,28 +419,31 @@ def create_multi_CRI(json_flow, CRI_ocean):
 
         ax.set_xlabel('Station Index (Field = 0)'.format(ocean_indx) )
         ax.set_ylabel('DRI')
-
+        
+        miny = 1982
+        maxy = 2010
+        
+        ocean_years = [i for i in range(miny, maxy+1) ]
+        for y in ocean_years:
+            ocean_data= CRI_ocean[CRI_ocean.Y == y]
+            oc_c, * oc_cri = ocean_data.dDICdTA.values.tolist()
+            ax.plot([oc, *oc2], [  oc_c, * oc_cri], label=y, alpha=0.8)
+        
         num_drops=0
         for y in populated:
             data= join[join.Y == y]
-            color=cmap(norm(y))
-            if y in (1980, 1981):
-                y = 1982
-            ocean_data= CRI_ocean[CRI_ocean.Y == y]
-        
+            # color=cmap(norm(y))
+            
             a,*b =  data.index_plot.values.tolist()
             c,*d =  data.dDICdTA.values.tolist()
-            oc_c, * oc_cri = ocean_data.dDICdTA.values.tolist()
-
-            ax.plot([0,a,*b], [1, c, *d,  ], label=y, alpha=0.8, c= color )
-            
-            ax.plot([oc, *oc2], [  oc_c, * oc_cri], label=y, alpha=0.8, c= color)
+            ax.plot([0,a,*b], [1, c, *d,  ], label=y, alpha=0.8 )
             min = data.dDICdTA.values.min()
-            if min < 0.85:
+            if min < 0.88:
                 num_drops+=1 
 
         # leg = ax.legend(bbox_to_anchor=(1.15, 1.05))
-        plt.text( ocean_indx, 1, 'Line represent distinct years between 1980-2007', bbox=dict(facecolor='thistle', alpha=0.3))
+        
+        plt.text(  ocean_indx- (len(loc)/3), 1, 'Line represent distinct years between 1980-2020', bbox=dict(facecolor='thistle', alpha=0.3))
         plt.text( ocean_indx-(len(loc)/3),0.98, 'RIVER', horizontalalignment='center')
         plt.text(ocean_indx+2, (ocean_data.dDICdTA.max() +0.01), 'OCEAN', horizontalalignment='center')
     else:
