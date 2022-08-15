@@ -148,7 +148,7 @@ def find_overlapping_stations(data, buffer_rad = 0.01 ):
     overlap_station['index'] = [ i+1 for i in range(len(overlap_station)) ]
     return overlap_station
 
-@st.cache(allow_output_mutation=True)
+# @st.cache(allow_output_mutation=True)
 def load_stations():
     """
     Load sampling stations; from Glorich global chem database
@@ -159,7 +159,7 @@ def load_stations():
     return gpd.GeoDataFrame(usloc, geometry=gpd.points_from_xy(usloc['Longitude'], usloc['Latitude']), crs='EPSG:4326')
     
 
-@st.cache(allow_output_mutation=True)
+# @st.cache(allow_output_mutation=True)
 def load_chem( locations):
     """Load processed file with the dDICdTA info calc by Adam 
     """
@@ -244,7 +244,7 @@ def random_point_mis_basin():
     y = random.uniform(miny, maxy)
     return sh.geometry.Point(x,y)
 
-@st.cache(allow_output_mutation=True)
+# @st.cache(allow_output_mutation=True)
 def open_missipi_sh_file():
     basin_sh =  os.path.join(os.path.dirname(__file__),'data/Miss_RiverBasin/Miss_RiverBasin.shp')
     basin = gpd.read_file(basin_sh)
@@ -383,7 +383,7 @@ def create_multi_CRI(json_flow, CRI_ocean):
     Returns: the fig to plot and the num of years it dropped 
     Inputs:
     data: json form of flowlines river data
-    cri_ocean: the ocean carbonate values for the ocean stations
+    cri_ocean: the ocean carbonate values for the ocean stations for all years 
     """
     #Get nearby sampling stations
     loc, _, _= snap_points(json_flow)
@@ -395,8 +395,9 @@ def create_multi_CRI(json_flow, CRI_ocean):
 
     year = join.groupby('Y').count()
     #filter to 3 data points 
-    populated = year[year['pH'] >3].index.tolist()
+    populated = year[year['pH'] >1].index.tolist()
     if len(populated) !=0 :
+        
         fig, ax = plt.subplots(figsize= (10,6))
 
         cmap = plt.cm.twilight_shifted
@@ -439,10 +440,11 @@ def create_multi_CRI(json_flow, CRI_ocean):
                 num_drops+=1 
 
         # leg = ax.legend(bbox_to_anchor=(1.15, 1.05))
-        plt.text( 0, ocean_data.dDICdTA.median(), 'Line represent distinct years between 1980-2007', bbox=dict(facecolor='thistle', alpha=0.3))
+        plt.text( ocean_indx, 1, 'Line represent distinct years between 1980-2007', bbox=dict(facecolor='thistle', alpha=0.3))
         plt.text( ocean_indx-(len(loc)/3),0.98, 'RIVER', horizontalalignment='center')
         plt.text(ocean_indx+2, (ocean_data.dDICdTA.max() +0.01), 'OCEAN', horizontalalignment='center')
     else:
+        print('Not enough data population from sampling stations')
         fig, num_drops = None, None 
     return fig , num_drops
 
