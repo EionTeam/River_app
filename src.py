@@ -214,7 +214,16 @@ def get_coords(address):
     """
     url = 'https://nominatim.openstreetmap.org/search/' + urllib.parse.quote(address) +'?format=json'
     response = requests.get(url).json()
-    return ( float(response[0]["lon"]), float(response[0]["lat"]))
+
+    us='United States'
+    am='USA'
+    add= response[0]['display_name']
+
+    if us in add or am in add:
+        coords = float(response[0]["lon"]), float(response[0]["lat"])
+    else:
+        coords = None 
+    return coords
 
 
 def find_oean_point(data):

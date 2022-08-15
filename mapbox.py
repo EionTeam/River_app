@@ -18,11 +18,12 @@ buffer = 0.009
 st.title('Eion Carbon Removal Verification')
 # st.subheader()
 def find_map(coords):
+
     json_flow = find_downstream_route(coords)
     _, overlap_station, time_to_ocean = snap_points(json_flow)
     
     # mapbox token
-     #coords for X on map and ocean point
+    #coords for X on map and ocean point
     cross_lon, cross_lat = coords[0], coords[1]
     mapboxt = 'MapBox Token'
     layout = go.Layout(title_text ='Sampling locations', title_x =0.5,  
@@ -119,7 +120,7 @@ rand_b = st.button('Take me to an interesting point', key='rand')
 def main(coords):
         fig, fig_cri, num_drops, url_df, time_to_ocean  = find_map(coords)
         if fig_cri is None:
-            st.title('No sampling stations downstream or not enough data available - choose another location or go to an interesting point')
+            st.write("### No sampling stations downstream or not enough data available - please choose another location or click 'Take me to an interesting point")
             st.plotly_chart(fig)
         else:
         # display streamlit map
@@ -153,8 +154,10 @@ while True:
 
     if go_b:
         coords = get_coords(address)
-        main(coords)
-  
+        if coords is not None:
+            main(coords)
+        else:
+            st.write("### Address is not within USA or is inaccurate -  please try again or click 'Take me to an interesting point'")
         st.session_state.num += 2
         
         break
