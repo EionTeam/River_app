@@ -148,7 +148,7 @@ def find_overlapping_stations(data, buffer_rad = 0.01 ):
     overlap_station['index'] = [ i+1 for i in range(len(overlap_station)) ]
     return overlap_station
 
-
+@st.cache
 def load_stations():
     """
     Load sampling stations; from Glorich global chem database
@@ -159,7 +159,7 @@ def load_stations():
     return gpd.GeoDataFrame(usloc, geometry=gpd.points_from_xy(usloc['Longitude'], usloc['Latitude']), crs='EPSG:4326')
     
 
-
+@st.cache
 def load_chem( locations):
     """Load processed file with the dDICdTA info calc by Adam 
     """
@@ -244,7 +244,7 @@ def random_point_mis_basin():
     y = random.uniform(miny, maxy)
     return sh.geometry.Point(x,y)
 
-
+@st.cache
 def open_missipi_sh_file():
     basin_sh =  os.path.join(os.path.dirname(__file__),'data/Miss_RiverBasin/Miss_RiverBasin.shp')
     basin = gpd.read_file(basin_sh)
