@@ -439,7 +439,7 @@ def create_multi_CRI(json_flow, CRI_ocean):
                 num_drops+=1 
 
         # leg = ax.legend(bbox_to_anchor=(1.15, 1.05))
-        plt.text( 0, 0.89, 'Line represent distinct years between 1980-2007', bbox=dict(facecolor='thistle', alpha=0.3))
+        plt.text( 0, ocean_data.dDICdTA.median(), 'Line represent distinct years between 1980-2007', bbox=dict(facecolor='thistle', alpha=0.3))
         plt.text( ocean_indx-(len(loc)/3),0.98, 'RIVER', horizontalalignment='center')
         plt.text(ocean_indx+2, (ocean_data.dDICdTA.max() +0.01), 'OCEAN', horizontalalignment='center')
     else:
