@@ -19,69 +19,70 @@ st.title('Eion Carbon Removal Verification')
 # st.subheader()
 def find_map(coords):
     json_flow = find_downstream_route(coords)
-    
     _, overlap_station, time_to_ocean = snap_points(json_flow)
     
-    name_df = overlap_station.reset_index()
-    name_df['hover_text']  =['Name: {}, Station ID: {},  USGS ID : {}, Index : {}'.format(a,b,c,d) for a,b,c,d in zip(name_df['STATION_NAME'], name_df['STATION_ID_ORIG'], name_df['STAT_ID'], name_df['index'])]
-    name_df['url'] = ['https://waterdata.usgs.gov/monitoring-location/{}/'.format(('0'+ str(x)) ) for x in name_df['STATION_ID_ORIG']]
-    url_df = name_df[['index', 'STATION_ID_ORIG', 'url', 'STATION_NAME']]
-    data_plot = name_df[['Latitude', 'Longitude', 'pH', 'hover_text']]
-    
-    CRI_ocean,  ocean_ph = get_CRI_ocean(json_flow, overlap_station)
-    df_plot = pd.concat([data_plot, ocean_ph], axis =0)
-
-    fig_cri_multi, num_drops = create_multi_CRI(json_flow,CRI_ocean )
-    
-    #coords for X on map and ocean point
-    cross_lon, cross_lat = coords[0], coords[1]
-
-    o_coords = find_oean_point(json_flow)
-    o_lon, o_lat = o_coords[0][0], o_coords[1][0]
-    
     # mapbox token
+     #coords for X on map and ocean point
+    cross_lon, cross_lat = coords[0], coords[1]
     mapboxt = 'MapBox Token'
-
-    # define layers and plot map
-    scatt = go.Scattermapbox(lat=df_plot['Latitude'], lon=df_plot['Longitude'],mode='markers+text', name ='pH' ,
-        below='False', hovertext = df_plot['hover_text'],  marker=go.scattermapbox.Marker(
-            autocolorscale=False,
-            showscale=True,
-            size=10,
-            opacity=1,
-            color=df_plot['pH'],
-            colorscale='viridis_r', 
-        )) #  
-    
-
-    field_loc = go.Scattermapbox(lat=[cross_lat], lon=[cross_lon],mode='markers+text', name = '', 
-        below='False', opacity =1, marker=go.scattermapbox.Marker(
-            autocolorscale=False,
-            # showscale=True,
-            size=10,
-            opacity=1,
-            color='red' ,
-            
-            
-        ))
-
-
     layout = go.Layout(title_text ='Sampling locations', title_x =0.5,  
-        width=950, height=700,mapbox = dict(center= dict(lat=37,  
-        lon=-95),accesstoken= mapboxt, zoom=4,style='stamen-terrain' ))
+            width=950, height=700,mapbox = dict(center= dict(lat=37,  
+            lon=-95),accesstoken= mapboxt, zoom=4,style='stamen-terrain' ))
+    
+    field_loc = go.Scattermapbox(lat=[cross_lat], lon=[cross_lon],mode='markers+text', name = '', 
+            below='False', opacity =1, marker=go.scattermapbox.Marker(
+                autocolorscale=False,
+                # showscale=True,
+                size=10,
+                opacity=1,
+                color='red' ,  
+            ))
+
+    if len(overlap_station)== 0:
+        #No sampling stations - just plot field  
+        fig_cri_multi, num_drops, url_df, time_to_ocean = None, None, None, None
+        # assign Graph Objects figure
+        layer1 = [field_loc]
+        
+        
+    else:
+        #Add sampling stations and ph etc. 
+        name_df = overlap_station.reset_index()
+        name_df['hover_text']  =['Name: {}, Station ID: {},  USGS ID : {}, Index : {}'.format(a,b,c,d) for a,b,c,d in zip(name_df['STATION_NAME'], name_df['STATION_ID_ORIG'], name_df['STAT_ID'], name_df['index'])]
+        name_df['url'] = ['https://waterdata.usgs.gov/monitoring-location/{}/'.format(('0'+ str(x)) ) for x in name_df['STATION_ID_ORIG']]
+        url_df = name_df[['index', 'STATION_ID_ORIG', 'url', 'STATION_NAME']]
+        data_plot = name_df[['Latitude', 'Longitude', 'pH', 'hover_text']]
+        
+        CRI_ocean,  ocean_ph = get_CRI_ocean(json_flow, overlap_station)
+        df_plot = pd.concat([data_plot, ocean_ph], axis =0)
+
+        fig_cri_multi, num_drops = create_multi_CRI(json_flow,CRI_ocean )
+
+        o_coords = find_oean_point(json_flow)
+        o_lon, o_lat = o_coords[0][0], o_coords[1][0]
 
 
-    # # streamlit multiselect widget
-    # layer1 = st.multiselect('Layer Selection', [field_loc, scatt], 
-    #     format_func=lambda x: 'Field' if x==field_loc else 'Stations')
+        # define layers and plot map
+        scatt = go.Scattermapbox(lat=df_plot['Latitude'], lon=df_plot['Longitude'],mode='markers+text', name ='pH' ,
+            below='False', hovertext = df_plot['hover_text'],  marker=go.scattermapbox.Marker(
+                autocolorscale=False,
+                showscale=True,
+                size=10,
+                opacity=1,
+                color=df_plot['pH'],
+                colorscale='viridis_r', 
+            )) #  
+        
 
-    layer1 = [field_loc, scatt]
+        # # streamlit multiselect widget
+        # layer1 = st.multiselect('Layer Selection', [field_loc, scatt], 
+        #     format_func=lambda x: 'Field' if x==field_loc else 'Stations')
+
+        layer1 = [field_loc, scatt]
 
     # assign Graph Objects figure
     fig = go.Figure(data=layer1, layout=layout )
-    
-    
-
+        
     #update with the river layer
     fig.update_layout( margin={"r":0,"t":0,"l":0,"b":0}, mapbox=go.layout.Mapbox(style= "open-street-map", zoom=4, 
     center_lat = coords[1] -5 ,
@@ -117,29 +118,33 @@ rand_b = st.button('Take me to an interesting point', key='rand')
 
 def main(coords):
         fig, fig_cri, num_drops, url_df, time_to_ocean  = find_map(coords)
-    # display streamlit map
-        tab1, tab2, tab3  = st.tabs(["Map", "Carbon Retention", "Station Links"])
-
-        with tab1:
-            
+        if fig_cri is None:
+            st.title('No sampling stations downstream or not enough data available - choose another location or go to an interesting point')
             st.plotly_chart(fig)
+        else:
+        # display streamlit map
+            tab1, tab2, tab3  = st.tabs(["Map", "Carbon Retention", "Station Links"])
 
-        with tab2: 
-            with st.container():
-                # st.markdown('----')
-                st.markdown('#### DIC trapped in water from this point risks escape to the atmosphere *{}* times.'.format(num_drops))
-                st.markdown('##### Estimated travel time to ocean after reaching waterway is {} weeks'.format(time_to_ocean.round(1)))
-                st.pyplot(fig_cri)
-                # st.markdown('----')
+            with tab1:
+                
+                st.plotly_chart(fig)
 
-        with tab3:
-            st.header("Sampling stations")
-            with st.container():
-                for index, id, url , name in zip(url_df['index'], url_df['STATION_ID_ORIG'], url_df['url'] , url_df['STATION_NAME']):
-                    st.write('{} {} ({})'.format(index, name, url))
+            with tab2: 
+                with st.container():
+                    # st.markdown('----')
+                    st.markdown('#### DIC trapped in water from this point risks escape to the atmosphere *{}* times.'.format(num_drops))
+                    st.markdown('##### Estimated travel time to ocean after reaching waterway is {} weeks'.format(time_to_ocean.round(1)))
+                    st.pyplot(fig_cri)
+                    # st.markdown('----')
 
-        st.write("Sources: Data is sourced from USGS's [NLDI API](https://waterdata.usgs.gov/blog/nldi-intro/) and the [GLORICH](https://www.geo.uni-hamburg.de/en/geologie/forschung/aquatische-geochemie/glorich.html) Global River Chemistry Database.")
-      
+            with tab3:
+                st.header("Sampling stations")
+                with st.container():
+                    for index, id, url , name in zip(url_df['index'], url_df['STATION_ID_ORIG'], url_df['url'] , url_df['STATION_NAME']):
+                        st.write('{} {} ({})'.format(index, name, url))
+
+            st.write("Sources: Data is sourced from USGS's [NLDI API](https://waterdata.usgs.gov/blog/nldi-intro/) and the [GLORICH](https://www.geo.uni-hamburg.de/en/geologie/forschung/aquatische-geochemie/glorich.html) Global River Chemistry Database.")
+        
         
         
 

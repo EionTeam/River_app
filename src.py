@@ -100,8 +100,6 @@ def find_downstream_route(coords):
     return flowlines
 
 
-# In[ ]:
-
 
 def print_downstream():
     """ Print map of downstream route 
@@ -176,7 +174,7 @@ def load_chem( locations):
 
     return chem[['Y','Q','STAT_ID','RESULT_DATETIME', 'TA', 'T', 'pCO2', 'pH', 'dDICdTA']]
 
-@st.cache  
+
 def create_filtered_locations():
     """Filter list of locations based on filters of clean data 
     TODO update this to just be a file? 
@@ -237,7 +235,7 @@ def random_point_mis_basin():
     y = random.uniform(miny, maxy)
     return sh.geometry.Point(x,y)
 
-@st.cache  
+
 def open_missipi_sh_file():
     basin_sh =  os.path.join(os.path.dirname(__file__),'data/Miss_RiverBasin/Miss_RiverBasin.shp')
     basin = gpd.read_file(basin_sh)
@@ -372,10 +370,11 @@ def find_CRI_years():
 
 def create_multi_CRI(json_flow, CRI_ocean):
     """ Create the mutli-CRI plots to use in streamlit app from the json form of the river flowlines 
-    Filter to at least three data points to include a year. Check how many years the CRI falls below the ocean CRI 
+    Filter to at least three data points to include a year. It also checks how many years the CRI falls below the ocean CRI 
     Returns: the fig to plot and the num of years it dropped 
     Inputs:
     data: json form of flowlines river data
+    cri_ocean: the ocean carbonate values for the ocean stations
     """
     #Get nearby sampling stations
     loc, _, _= snap_points(json_flow)
@@ -388,57 +387,60 @@ def create_multi_CRI(json_flow, CRI_ocean):
     year = join.groupby('Y').count()
     #filter to 3 data points 
     populated = year[year['pH'] >3].index.tolist()
+    if len(populated) !=0 :
+        fig, ax = plt.subplots(figsize= (10,6))
 
-    fig, ax = plt.subplots(figsize= (10,6))
-
-    cmap = plt.cm.twilight_shifted
-    norm = mpl.colors.Normalize(vmin=int(populated[0]), vmax=int(populated[-1]) )
-    sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
-
-
-    fig.suptitle('DIC Retention Index (DRI) by Station',
-        fontsize='large',
-        # loc='center',
-        # fontweight='normal',
-        style='normal',
-        family='monospace')
-    # ax.set_suptitle('Index 0 = Field. Final Index = Ocean')
-
-    ocean_indx= len(loc)+1
-    oc, *oc2 = [x for x in range( ocean_indx, ocean_indx+6)]
+        cmap = plt.cm.twilight_shifted
+        norm = mpl.colors.Normalize(vmin=int(populated[0]), vmax=int(populated[-1]) )
+        sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
 
 
-    ax.set_xlabel('Station Index (Field = 0)'.format(ocean_indx) )
-    ax.set_ylabel('DRI')
+        fig.suptitle('DIC Retention Index (DRI) by Station',
+            fontsize='large',
+            # loc='center',
+            # fontweight='normal',
+            style='normal',
+            family='monospace')
 
-    num_drops=0
-    for y in populated:
-        data= join[join.Y == y]
-        color=cmap(norm(y))
-        if y in (1980, 1981):
-            y = 1982
-        ocean_data= CRI_ocean[CRI_ocean.Y == y]
-    
-        a,*b =  data.index_plot.values.tolist()
-        c,*d =  data.dDICdTA.values.tolist()
-        oc_c, * oc_cri = ocean_data.dDICdTA.values.tolist()
 
-        ax.plot([0,a,*b], [1, c, *d,  ], label=y, alpha=0.8, c= color )
+        ocean_indx= len(loc)+1
+        oc, *oc2 = [x for x in range( ocean_indx, ocean_indx+6)]
+
+        ax.set_xlabel('Station Index (Field = 0)'.format(ocean_indx) )
+        ax.set_ylabel('DRI')
+
+        num_drops=0
+        for y in populated:
+            data= join[join.Y == y]
+            color=cmap(norm(y))
+            if y in (1980, 1981):
+                y = 1982
+            ocean_data= CRI_ocean[CRI_ocean.Y == y]
         
-        ax.plot([oc, *oc2], [  oc_c, * oc_cri], label=y, alpha=0.8, c= color)
-        min = data.dDICdTA.values.min()
-        if min < 0.85:
-            num_drops+=1 
+            a,*b =  data.index_plot.values.tolist()
+            c,*d =  data.dDICdTA.values.tolist()
+            oc_c, * oc_cri = ocean_data.dDICdTA.values.tolist()
 
-    # leg = ax.legend(bbox_to_anchor=(1.15, 1.05))
-    plt.text( 8.5, 1, 'Line represent distinct years between 1980-2007', bbox=dict(facecolor='thistle', alpha=0.3))
-    plt.text( 4.5, 0.94, 'RIVER', horizontalalignment='center')
-    plt.text( 9.5, 0.91, 'OCEAN', horizontalalignment='center')
-    # plt.tight_layout()
+            ax.plot([0,a,*b], [1, c, *d,  ], label=y, alpha=0.8, c= color )
+            
+            ax.plot([oc, *oc2], [  oc_c, * oc_cri], label=y, alpha=0.8, c= color)
+            min = data.dDICdTA.values.min()
+            if min < 0.85:
+                num_drops+=1 
+
+        # leg = ax.legend(bbox_to_anchor=(1.15, 1.05))
+        plt.text( 8.5, 1, 'Line represent distinct years between 1980-2007', bbox=dict(facecolor='thistle', alpha=0.3))
+        plt.text( 4.5, 0.94, 'RIVER', horizontalalignment='center')
+        plt.text( 9.5, 0.91, 'OCEAN', horizontalalignment='center')
+    else:
+        fig, num_drops = None, None 
     return fig , num_drops
 
 
 def process_river(data): 
+    """ 
+    Process the json output from UGSG api into clean geodataframe in 4326 crs 
+    """
     coords = [data['features'][i]['geometry']['coordinates'] for i in range(len(data['features'])) ]
     dict_data = {key: value for (key, value) in zip([i for i in range(len(data['features'])) ] , [LineString(coords[i]) for i in range(len(data['features'])) ] ) }
     river_df = pd.DataFrame(dict_data, index=['geometry']).T
@@ -448,7 +450,9 @@ def process_river(data):
     
     
 def getExtrapoledLine(p1,p2):
-    'Creates a line extrapoled in p1->p2 direction. input points need to be in utm coords. this creates line 500 km out'
+    """
+    Creates a line extrapoled in p1->p2 direction. input points need to be in utm coords. this creates line 500 km out
+    """
     dist = p1.distance(p2) 
     EXTRAPOL_RATIO = 500000 / dist 
     a = p2
@@ -458,27 +462,29 @@ def getExtrapoledLine(p1,p2):
 
 
 def get_ocean_nodes(data, df_loc):
-    
+    """ 
+    Extrapolate from last station and mouth of river to get 5 stations each 100km out into the ocean 
+    """
+
     river_gdf = process_river(data)
     river_utm = river_gdf.to_crs(utm)
     _ ,ocean = river_utm.iloc[-1].geometry.boundary.geoms
     
-    
     df_loc['geometry'] = [Point(lon, lat) for lon, lat in zip(df_loc['Longitude'],df_loc['Latitude']  )]
     df_utm = df_loc.to_crs(utm)
     final_station =  df_utm.iloc[-1].geometry
-    
+    print(final_station)
     extend = getExtrapoledLine(final_station,ocean)
     km = 1000
     one, two, three, four,five = extend.interpolate(100*km), extend.interpolate(200 *km ), extend.interpolate(300*km), extend.interpolate(400*km) , extend.interpolate(500*km)                                                                                                                              
     points = [ocean, one, two, three, four,five]
     new_nodes = gpd.GeoDataFrame(geometry = points, crs = utm)
     new_nodes = new_nodes.to_crs("EPSG:4326")  
-    
+
     return new_nodes
 
 
-@st.cache  
+
 def load_ocean_grid_carbonate_data():
     path = os.path.join(os.path.dirname(__file__),"data/ocean_grid/ocean_carbonate_grid_data.shp") 
     gdf = gpd.read_file(path)
@@ -486,16 +492,17 @@ def load_ocean_grid_carbonate_data():
 
 
 def get_CRI_ocean(json_flow, overlap_station):
-    """Pull the geogrid data for ocean sampling and ocean ph for the 5 ocean stations + mouth of river
+    """
+    Pull the geogrid data for ocean sampling and ocean ph for the 5 ocean stations + mouth of river
     """
     #Load processed Grid Cabonate data
     gdf = load_ocean_grid_carbonate_data()
-    print(gdf)
+
     #Find extended 5 stations 
     ocean_stations = get_ocean_nodes(json_flow, overlap_station)
-    print(ocean_stations)
+
     CRI_ocean = pd.DataFrame(columns = ['Y', 'dDICdTA', ])
-                         
+                        
     for point in ocean_stations.geometry:
         
         gdf['dist'] = [x.distance(point) for x in gdf.geometry ]
@@ -509,4 +516,5 @@ def get_CRI_ocean(json_flow, overlap_station):
     ocean_ph = CRI_ocean[[ 'Latitude','Longitude', 'ph_total']].groupby([ 'Longitude', 'Latitude']).mean().reset_index()
     ocean_ph['hover_text'] = ['Ocean Sample, pH: {}'.format(ph) for ph in ocean_ph['ph_total'].round(1) ]
     ocean_ph.rename(columns={ 'ph_total': 'pH'}, inplace=True )
+
     return CRI_ocean,  ocean_ph 
