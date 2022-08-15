@@ -148,7 +148,7 @@ def find_overlapping_stations(data, buffer_rad = 0.01 ):
     overlap_station['index'] = [ i+1 for i in range(len(overlap_station)) ]
     return overlap_station
 
-@st.cache
+@st.cache(allow_output_mutation=True)
 def load_stations():
     """
     Load sampling stations; from Glorich global chem database
@@ -159,7 +159,7 @@ def load_stations():
     return gpd.GeoDataFrame(usloc, geometry=gpd.points_from_xy(usloc['Longitude'], usloc['Latitude']), crs='EPSG:4326')
     
 
-@st.cache
+@st.cache(allow_output_mutation=True)
 def load_chem( locations):
     """Load processed file with the dDICdTA info calc by Adam 
     """
@@ -244,7 +244,7 @@ def random_point_mis_basin():
     y = random.uniform(miny, maxy)
     return sh.geometry.Point(x,y)
 
-@st.cache
+@st.cache(allow_output_mutation=True)
 def open_missipi_sh_file():
     basin_sh =  os.path.join(os.path.dirname(__file__),'data/Miss_RiverBasin/Miss_RiverBasin.shp')
     basin = gpd.read_file(basin_sh)
@@ -407,9 +407,10 @@ def create_multi_CRI(json_flow, CRI_ocean):
         fig.suptitle('DIC Retention Index (DRI) by Station',
             fontsize='large',
             # loc='center',
-            # fontweight='normal',
+            fontweight='bold',
             style='normal',
-            family='monospace')
+            family='monospace'
+            )
 
 
         ocean_indx= len(loc)+1
@@ -438,9 +439,9 @@ def create_multi_CRI(json_flow, CRI_ocean):
                 num_drops+=1 
 
         # leg = ax.legend(bbox_to_anchor=(1.15, 1.05))
-        plt.text( 8.5, 1, 'Line represent distinct years between 1980-2007', bbox=dict(facecolor='thistle', alpha=0.3))
-        plt.text( 4.5, 0.94, 'RIVER', horizontalalignment='center')
-        plt.text( 9.5, 0.91, 'OCEAN', horizontalalignment='center')
+        plt.text( 0, 0.89, 'Line represent distinct years between 1980-2007', bbox=dict(facecolor='thistle', alpha=0.3))
+        plt.text( ocean_indx-(len(loc)/3),0.98, 'RIVER', horizontalalignment='center')
+        plt.text(ocean_indx+2, (ocean_data.dDICdTA.max() +0.01), 'OCEAN', horizontalalignment='center')
     else:
         fig, num_drops = None, None 
     return fig , num_drops

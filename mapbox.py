@@ -133,8 +133,8 @@ def main(coords):
             with tab2: 
                 with st.container():
                     # st.markdown('----')
-                    st.markdown('#### DIC trapped in water from this point risks escape to the atmosphere *{}* times.'.format(num_drops))
-                    st.markdown('##### Estimated travel time to ocean after reaching waterway is {} weeks'.format(time_to_ocean.round(1)))
+                    st.markdown('#### DIC trapped in water from this point risks escape to the atmosphere *{}* times. Estimated travel time to ocean after reaching waterway is {} weeks.'.format(num_drops, time_to_ocean.round(1)))
+                    
                     st.pyplot(fig_cri)
                     # st.markdown('----')
 
