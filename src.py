@@ -175,6 +175,7 @@ def load_chem( locations):
     return chem[['Y','Q','STAT_ID','RESULT_DATETIME', 'TA', 'T', 'pCO2', 'pH', 'dDICdTA']]
 
 
+
 def create_filtered_locations():
     """Filter list of locations based on filters of clean data 
     TODO update this to just be a file? 
@@ -253,6 +254,16 @@ def open_missipi_sh_file():
     buff_basin.to_crs('EPSG:4326')
     buffer_gdf = gpd.GeoDataFrame(buff_basin , crs='EPSG:4326', geometry=buff_basin ) 
     return buffer_gdf
+
+def load_rand_points():
+    return pd.read_csv(os.path.join(os.path.dirname(__file__),'data/interesting_points.csv'))
+  
+def choose_field_point():
+    """ Choose random field point out of pre created list 
+    """
+    df_points = load_rand_points()
+    i= random.randint(0,61)
+    return df_points.iloc[i, :]['lon'], df_points.iloc[i, :]['lat']
 
 def generate_field_point():
     """Generates random point in Missipi basin, filters using shapefile 

@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import pandas as pd 
 import numpy as np
 
-from src import get_CRI_ocean, get_ocean_nodes, find_overlapping_stations, load_stations, generate_field_point,  get_coords, find_downstream_route, find_oean_point
+from src import choose_field_point, get_CRI_ocean, get_ocean_nodes, find_overlapping_stations, load_stations, generate_field_point,  get_coords, find_downstream_route, find_oean_point
 from src import create_multi_CRI , snap_points
 
 buffer = 0.009
@@ -162,7 +162,7 @@ while True:
         
         break
     elif rand_b:
-        coords = generate_field_point()
+        coords = choose_field_point()
         print(coords)
         main(coords)
  
