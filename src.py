@@ -213,18 +213,23 @@ def create_filtered_locations():
 def get_coords(address):
     """use Open streem map to get lat lon coords from address that user will give on stremalit app 
     """
-    url = 'https://nominatim.openstreetmap.org/search/' + urllib.parse.quote(address) +'?format=json'
-    response = requests.get(url).json()
+    address = address.replace(", ", "+")
+    address = address.lower()
+    # url = 'https://nominatim.openstreetmap.org/search' + urllib.parse.quote(address) +'?format=json'
+    url = f"https://nominatim.openstreetmap.org/search?q={address}+us&format=jsonv2&limit=1"
+    # https://nominatim.openstreetmap.org/search?q=vicksburg+mississippi+us&format=jsonv2&limit=1
+    
+    url = f"https://nominatim.openstreetmap.org/search?q={address}+us&format=jsonv2&limit=1"
+    headers = {
+        'User-Agent': 'YourAppName/1.0 (your-email@example.com)'
+    }
+    
+    response = requests.get(url, headers=headers)
+    output = response.json()
+    lat = output[0]['lat']
+    lon = output[0]['lon']
+    coords = (float(lon), float(lat))
 
-    us='United States'
-    am='USA'
-    add= response[0]['display_name']
-
-    if us in add or am in add:
-        coords = float(response[0]["lon"]), float(response[0]["lat"])
-    else:
-        coords = None 
-    return coords
 
 
 def find_oean_point(data):
