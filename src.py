@@ -216,7 +216,6 @@ def get_coords(address):
     address = address.replace(", ", "+")
     address = address.lower()
     # url = 'https://nominatim.openstreetmap.org/search' + urllib.parse.quote(address) +'?format=json'
-    url = f"https://nominatim.openstreetmap.org/search?q={address}+us&format=jsonv2&limit=1"
     # https://nominatim.openstreetmap.org/search?q=vicksburg+mississippi+us&format=jsonv2&limit=1
     
     url = f"https://nominatim.openstreetmap.org/search?q={address}+us&format=jsonv2&limit=1"
@@ -229,7 +228,7 @@ def get_coords(address):
     lat = output[0]['lat']
     lon = output[0]['lon']
     coords = (float(lon), float(lat))
-
+    return coords
 
 
 def find_oean_point(data):
