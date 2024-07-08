@@ -56,7 +56,7 @@ def find_map(coords):
         CRI_ocean,  ocean_ph = get_CRI_ocean(json_flow, overlap_station)
         df_plot = pd.concat([data_plot, ocean_ph], axis =0)
 
-        fig_cri_multi, num_drops = create_multi_CRI(json_flow,CRI_ocean )
+        fig_cri_multi, num_drops = create_multi_CRI(json_flow, CRI_ocean)
 
         o_coords = find_oean_point(json_flow)
         o_lon, o_lat = o_coords[0][0], o_coords[1][0]
@@ -98,7 +98,7 @@ def find_map(coords):
     )
     )
     # fig.update_traces(name=  'pH', selector=dict(type='scattermapbox'))
-    return fig, fig_cri_multi, num_drops, url_df, time_to_ocean
+    return fig, fig_cri_multi, num_drops, url_df, time_to_ocean, CRI_ocean
 
 
 
@@ -117,7 +117,7 @@ rand_b = st.button('Take me to an interesting point', key='rand')
 
 
 def main(coords):
-        fig, fig_cri, num_drops, url_df, time_to_ocean  = find_map(coords)
+        fig, fig_cri, num_drops, url_df, time_to_ocean, CRI_ocean  = find_map(coords)
         if fig_cri is None:
             st.write("### No sampling stations downstream or not enough data available - please choose another location or click 'Take me to an interesting point")
             st.plotly_chart(fig)
@@ -133,7 +133,13 @@ def main(coords):
                 with st.container():
                     # st.markdown('----')
                     st.markdown('#### DIC trapped in water from this point risks escape to the atmosphere *{}* times. Estimated travel time to ocean after reaching waterway is {} weeks.'.format(num_drops, time_to_ocean.round(1)))
-                    
+                    # Create a download button
+                    st.download_button(
+                        label="Download Ocean CRI",
+                        data=CRI_ocean,
+                        file_name='CRI_ocean.csv',
+                        mime='text/csv',
+                    )
                     st.pyplot(fig_cri)
                     # st.markdown('----')
 
