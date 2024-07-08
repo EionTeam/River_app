@@ -1,4 +1,3 @@
-
 import streamlit as st
 import json
 import geopandas as gpd
@@ -111,7 +110,7 @@ if 'num' not in st.session_state:
 
 
 default_address = 'Vicksburg, Mississippi'
-address = st.text_input("Enter field address to see path of dissolved Carbon from field to ocean", default_address )
+address = st.text_input("Enter field address to see path of dissolved Carbon from field to ocean (City, State)", default_address )
 go_b = st.button('Go', key='go')
 rand_b = st.button('Take me to an interesting point', key='rand')
 
