@@ -119,6 +119,7 @@ rand_b = st.button('Take me to an interesting point', key='rand')
 def main(coords):
         fig, fig_cri, num_drops, url_df, time_to_ocean, CRI_ocean  = find_map(coords)
         print(CRI_ocean)
+        print(CRI_ocean.columns)
         if fig_cri is None:
             st.write("### No sampling stations downstream or not enough data available - please choose another location or click 'Take me to an interesting point")
             st.plotly_chart(fig)
