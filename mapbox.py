@@ -118,6 +118,7 @@ rand_b = st.button('Take me to an interesting point', key='rand')
 
 def main(coords):
         fig, fig_cri, num_drops, url_df, time_to_ocean, CRI_ocean  = find_map(coords)
+        print(CRI_ocean)
         if fig_cri is None:
             st.write("### No sampling stations downstream or not enough data available - please choose another location or click 'Take me to an interesting point")
             st.plotly_chart(fig)
@@ -134,12 +135,12 @@ def main(coords):
                     # st.markdown('----')
                     st.markdown('#### DIC trapped in water from this point risks escape to the atmosphere *{}* times. Estimated travel time to ocean after reaching waterway is {} weeks.'.format(num_drops, time_to_ocean.round(1)))
                     # Create a download button
-                    st.download_button(
-                        label="Download Ocean CRI",
-                        data=CRI_ocean,
-                        file_name='CRI_ocean.csv',
-                        mime='text/csv',
-                    )
+                    # st.download_button(
+                    #     label="Download Ocean CRI",
+                    #     data=CRI_ocean,
+                    #     file_name='CRI_ocean.csv',
+                    #     mime='text/csv',
+                    # )
                     st.pyplot(fig_cri)
                     # st.markdown('----')
 
