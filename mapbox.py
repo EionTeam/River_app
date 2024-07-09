@@ -135,7 +135,7 @@ def main(coords):
         print(CRI_ocean.columns)
 
         if fig_cri is None:
-            st.write("#### Note: No sampling stations downstream or not enough data available")
+            st.write("##### Note: Not enough data available")
             st.plotly_chart(fig)
         else:
         # display streamlit map
@@ -163,6 +163,7 @@ def main(coords):
                 file_name='CRI_ocean.zip',
                 mime='application/zip',
             )
+
             tab1, tab2, tab3  = st.tabs(["Map", "Carbon Retention", "Station Links"])
 
             with tab1:
