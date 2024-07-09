@@ -103,25 +103,6 @@ def find_map(coords):
 
 
 
-default_address = 'Vicksburg, Mississippi'
-logo = './img/Eion-Logotype.png'
-
-# Setup sidebar
-st.sidebar.image(logo, width=200)
-st.sidebar.title('Oceanic System Inefficiencies')
-address = st.sidebar.text_input("Enter Location (City, State)", default_address )
-
-# Create two columns for the buttons
-col1, col2 = st.sidebar.columns(2)
-
-# Place the buttons in the columns
-with col1:
-    go_b = st.button('Go', key='go')
-
-with col2:
-    rand_b = st.button('Random Location', key='rand')
-
-
 def main(coords):
         fig, fig_cri, num_drops, url_df, time_to_ocean, CRI_ocean  = find_map(coords)
         print(CRI_ocean)
@@ -179,7 +160,25 @@ def main(coords):
 
             st.write("Sources: River data is sourced from USGS's [NLDI API](https://waterdata.usgs.gov/blog/nldi-intro/) and the [GLORICH](https://www.geo.uni-hamburg.de/en/geologie/forschung/aquatische-geochemie/glorich.html) Global River Chemistry Database. Ocean data is sourced from [NOAA.](https://www.ncei.noaa.gov/access/metadata/landing-page/bin/iso?id=gov.noaa.nodc:0220059)")
         
-        
+
+default_address = 'Vicksburg, Mississippi'
+logo = './img/Eion-Logotype.png'
+
+# Setup sidebar
+st.sidebar.image(logo, width=200)
+st.sidebar.title('Ocean System Inefficiencies')
+address = st.sidebar.text_input("Enter Location (City, State)", default_address )
+
+# Create two columns for the buttons
+col1, col2 = st.sidebar.columns(2)
+
+# Place the buttons in the columns
+with col1:
+    go_b = st.button('Go', key='go')
+
+with col2:
+    rand_b = st.button('Random Location', key='rand')
+
         
 
 while True:    
