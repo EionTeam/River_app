@@ -213,6 +213,7 @@ def create_filtered_locations():
 def get_coords(address):
     """use Open streem map to get lat lon coords from address that user will give on stremalit app 
     """
+
     address = address.replace(", ", "+")
     address = address.lower()
     # url = 'https://nominatim.openstreetmap.org/search' + urllib.parse.quote(address) +'?format=json'
@@ -229,6 +230,47 @@ def get_coords(address):
     lon = output[0]['lon']
     coords = (float(lon), float(lat))
     return coords
+
+    
+def get_coords(address):
+    """
+    Use OpenStreetMap to get latitude and longitude coordinates from an address.
+    If the address is already in "lat, lon" format, return it directly.
+    
+    Parameters:
+    address (str): Address or "lat, lon" string
+    
+    Returns:
+    tuple: (longitude, latitude)
+    """
+    # Check if the address is in "lat, lon" format
+    try:
+        lat, lon = map(float, address.split(", "))
+        return (float(lon), float(lat))
+    except ValueError:
+        pass
+    
+    # Otherwise, proceed with the geocoding process
+    address = address.replace(", ", "+")
+    address = address.lower()
+    url = f"https://nominatim.openstreetmap.org/search?q={address}+us&format=jsonv2&limit=1"
+    headers = {
+        'User-Agent': 'YourAppName/1.0 (your-email@example.com)'
+    }
+    
+    response = requests.get(url, headers=headers)
+    response.raise_for_status()  # Raise an error for bad status codes
+    output = response.json()
+    
+    if not output:
+        raise ValueError("No results found for the given address.")
+    
+    lat = output[0]['lat']
+    lon = output[0]['lon']
+    coords = (float(lon), float(lat))
+    return coords
+
+
 
 
 def find_oean_point(data):

@@ -169,7 +169,7 @@ logo = './img/Eion-Logotype.png'
 # Setup sidebar
 st.sidebar.image(logo, width=200)
 st.sidebar.title('Ocean System Inefficiencies')
-address = st.sidebar.text_input("Enter Location (City, State)", default_address)
+address = st.sidebar.text_input("Enter Location (City, State or Lat, Lon)", default_address)
 
 # Create two columns for the buttons
 col1, col2 = st.sidebar.columns(2)
