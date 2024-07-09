@@ -114,8 +114,24 @@ logo = './img/Eion-Logotype.png'
 st.sidebar.image(logo, width=200)
 st.sidebar.title('Oceanic System Loss')
 address = st.sidebar.text_input("Enter Location (City, State)", default_address )
-go_b = st.sidebar.button('Go', key='go')
-rand_b = st.sidebar.button('Random Location', key='rand')
+# go_b = st.sidebar.button('Go', key='go')
+# rand_b = st.sidebar.button('Random Location', key='rand')
+
+# Create two columns for the buttons
+col1, col2 = st.sidebar.columns(2)
+
+# Place the buttons in the columns
+with col1:
+    go_b = st.button('Go', key='go')
+
+with col2:
+    rand_b = st.button('Random Location', key='rand')
+
+# Example usage of the buttons
+if go_b:
+    st.write("Go button clicked!")
+if rand_b:
+    st.write("Random Location button clicked!")
 
 
 
