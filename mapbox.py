@@ -179,30 +179,24 @@ with col1:
 with col2:
     rand_b = st.button('Random Location', key='rand')
 
-        
-
-while True:    
-    num = st.session_state.num
-
-    if go_b:
-        coords = get_coords(address)
-        if coords is not None:
-            main(coords)
-        else:
-            st.write("### Address is not within USA or is inaccurate -  please try again or click 'Take me to an interesting point'")
-        st.session_state.num += 2
-        
-        break
-    elif rand_b:
-        coords = choose_field_point()
-        print(coords)
+if go_b:
+    coords = get_coords(address)
+    if coords is not None:
         main(coords)
- 
-        st.session_state.num += 2
-        
-        break
-    else:        
-        st.stop()
-
-
+    else:
+        st.write("### Address is not within USA or is inaccurate -  please try again or click 'Take me to an interesting point'")
+    st.session_state.num += 2
     
+    break
+elif rand_b:
+    coords = choose_field_point()
+    print(coords)
+    main(coords)
+
+    st.session_state.num += 2
+    
+    break
+else:        
+    st.stop()
+
+
