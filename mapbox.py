@@ -143,7 +143,8 @@ def main(coords):
                     gdf = gpd.GeoDataFrame(CRI_ocean, crs="EPSG:4326")
 
                     # Save GeoDataFrame to a shapefile in a temporary directory
-                    shapefile_path = "CRI_ocean"
+                    
+                    shapefile_path = "CRI_ocean.shp"
                     gdf.to_file(shapefile_path, driver='ESRI Shapefile')
 
                     # Create a zip file of the shapefile components
