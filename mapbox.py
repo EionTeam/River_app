@@ -147,7 +147,7 @@ def main(coords):
                     gdf.to_file("CRI_ocean.shp")
 
                     # Create a zip file of the shapefile components
-                    shapefile_components = [f"{shapefile_path}.shp", f"{shapefile_path}.shx", f"{shapefile_path}.dbf", f"{shapefile_path}.prj"]
+                    shapefile_components = [f"{shapefile_name}.shp", f"{shapefile_name}.shx", f"{shapefile_name}.dbf", f"{shapefile_name}.prj"]
 
                     zip_buffer = io.BytesIO()
                     with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
