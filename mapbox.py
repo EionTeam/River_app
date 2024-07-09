@@ -127,12 +127,6 @@ with col1:
 with col2:
     rand_b = st.button('Random Location', key='rand')
 
-# Example usage of the buttons
-if go_b:
-    st.write("Go button clicked!")
-if rand_b:
-    st.write("Random Location button clicked!")
-
 
 
 def main(coords):
