@@ -11,7 +11,16 @@ import zipfile
 import os
 import io
 
-from src import choose_field_point, get_CRI_ocean, get_ocean_nodes, find_overlapping_stations, load_stations, generate_field_point,  get_coords, find_downstream_route, find_oean_point
+from src import choose_field_point, \
+                get_CRI_ocean, \
+                get_ocean_nodes, \
+                find_overlapping_stations, \
+                load_stations, \
+                generate_field_point,  \
+                get_coords, \
+                find_downstream_route, \
+                find_oean_point
+
 from src import create_multi_CRI , snap_points
 
 buffer = 0.009
@@ -44,7 +53,6 @@ def find_map(coords):
         # assign Graph Objects figure
         layer1 = [field_loc]
         
-        
     else:
         #Add sampling stations and ph etc. 
         name_df = overlap_station.reset_index()
@@ -61,7 +69,6 @@ def find_map(coords):
         o_coords = find_oean_point(json_flow)
         o_lon, o_lat = o_coords[0][0], o_coords[1][0]
 
-
         # define layers and plot map
         scatt = go.Scattermapbox(lat=df_plot['Latitude'], lon=df_plot['Longitude'],mode='markers+text', name ='pH' ,
             below='False', hovertext = df_plot['hover_text'],  marker=go.scattermapbox.Marker(
@@ -72,11 +79,6 @@ def find_map(coords):
                 color=df_plot['pH'],
                 colorscale='viridis_r', 
             )) #  
-        
-
-        # # streamlit multiselect widget
-        # layer1 = st.multiselect('Layer Selection', [field_loc, scatt], 
-        #     format_func=lambda x: 'Field' if x==field_loc else 'Stations')
 
         layer1 = [field_loc, scatt]
 
@@ -97,35 +99,7 @@ def find_map(coords):
         }]
     )
     )
-    # fig.update_traces(name=  'pH', selector=dict(type='scattermapbox'))
     return fig, fig_cri_multi, num_drops, url_df, time_to_ocean, CRI_ocean
-
-
-
-
-if 'num' not in st.session_state:
-    st.session_state.num = 1
-# if 'data' not in st.session_state:
-#     st.session_state.data = []
-
-
-default_address = 'Vicksburg, Mississippi'
-logo = './img/Eion-Logotype.png'
-st.sidebar.image(logo, width=200)
-st.sidebar.title('Oceanic System Loss')
-address = st.sidebar.text_input("Enter Location (City, State)", default_address )
-# go_b = st.sidebar.button('Go', key='go')
-# rand_b = st.sidebar.button('Random Location', key='rand')
-
-# Create two columns for the buttons
-col1, col2 = st.sidebar.columns(2)
-
-# Place the buttons in the columns
-with col1:
-    go_b = st.button('Go', key='go')
-
-with col2:
-    rand_b = st.button('Random Location', key='rand')
 
 
 def main(coords):
@@ -186,7 +160,26 @@ def main(coords):
             st.write("Sources: River data is sourced from USGS's [NLDI API](https://waterdata.usgs.gov/blog/nldi-intro/) and the [GLORICH](https://www.geo.uni-hamburg.de/en/geologie/forschung/aquatische-geochemie/glorich.html) Global River Chemistry Database. Ocean data is sourced from [NOAA.](https://www.ncei.noaa.gov/access/metadata/landing-page/bin/iso?id=gov.noaa.nodc:0220059)")
         
         
-        
+if 'num' not in st.session_state:
+    st.session_state.num = 1
+
+default_address = 'Vicksburg, Mississippi'
+logo = './img/Eion-Logotype.png'
+st.sidebar.image(logo, width=200)
+st.sidebar.title('Oceanic System Loss')
+address = st.sidebar.text_input("Enter Location (City, State)", default_address )
+# go_b = st.sidebar.button('Go', key='go')
+# rand_b = st.sidebar.button('Random Location', key='rand')
+
+# Create two columns for the buttons
+col1, col2 = st.sidebar.columns(2)
+
+# Place the buttons in the columns
+with col1:
+    go_b = st.button('Go', key='go')
+
+with col2:
+    rand_b = st.button('Random Location', key='rand')
 
 while True:    
     num = st.session_state.num
