@@ -129,7 +129,6 @@ def main(coords):
             st.plotly_chart(fig)
         else:
         # display streamlit map
-            tab1, tab2, tab3  = st.tabs(["Map", "Carbon Retention", "Station Links"])
             gdf = gpd.GeoDataFrame(CRI_ocean, geometry='geometry', crs="EPSG:4326")
 
             # Save GeoDataFrame to a shapefile in a temporary directory
@@ -154,6 +153,8 @@ def main(coords):
                 file_name='CRI_ocean.zip',
                 mime='application/zip',
             )
+            tab1, tab2, tab3  = st.tabs(["Map", "Carbon Retention", "Station Links"])
+
             with tab1:
                 
                 st.plotly_chart(fig)
