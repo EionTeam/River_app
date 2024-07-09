@@ -17,7 +17,7 @@ from src import create_multi_CRI , snap_points
 buffer = 0.009
 
 #title and format app 
-st.title('Eion Carbon Removal Verification')
+st.sidebar.title('Oceanic System Loss')
 # st.subheader()
 def find_map(coords):
 
@@ -113,9 +113,9 @@ if 'num' not in st.session_state:
 
 
 default_address = 'Vicksburg, Mississippi'
-address = st.text_input("Enter City, State below:", default_address )
-go_b = st.button('Go', key='go')
-rand_b = st.button('Random Location', key='rand')
+address = st.sidebar.text_input("Enter City, State below:", default_address )
+go_b = st.sidebar.button('Go', key='go')
+rand_b = st.sidebar.button('Random Location', key='rand')
 
 
 
