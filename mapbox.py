@@ -103,17 +103,13 @@ def find_map(coords):
 
 
 
-
-if 'num' not in st.session_state:
-    st.session_state.num = 1
-
 default_address = 'Vicksburg, Mississippi'
 logo = './img/Eion-Logotype.png'
+
+# Setup sidebar
 st.sidebar.image(logo, width=200)
-st.sidebar.title('Oceanic System Loss')
+st.sidebar.title('Oceanic System Inefficiencies')
 address = st.sidebar.text_input("Enter Location (City, State)", default_address )
-# go_b = st.sidebar.button('Go', key='go')
-# rand_b = st.sidebar.button('Random Location', key='rand')
 
 # Create two columns for the buttons
 col1, col2 = st.sidebar.columns(2)
