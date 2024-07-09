@@ -209,29 +209,6 @@ def create_filtered_locations():
     return stat_ph_CRI[stat_ph_CRI.index.isin(chem['STAT_ID'])]
 
 
-
-def get_coords(address):
-    """use Open streem map to get lat lon coords from address that user will give on stremalit app 
-    """
-
-    address = address.replace(", ", "+")
-    address = address.lower()
-    # url = 'https://nominatim.openstreetmap.org/search' + urllib.parse.quote(address) +'?format=json'
-    # https://nominatim.openstreetmap.org/search?q=vicksburg+mississippi+us&format=jsonv2&limit=1
-    
-    url = f"https://nominatim.openstreetmap.org/search?q={address}+us&format=jsonv2&limit=1"
-    headers = {
-        'User-Agent': 'YourAppName/1.0 (your-email@example.com)'
-    }
-    
-    response = requests.get(url, headers=headers)
-    output = response.json()
-    lat = output[0]['lat']
-    lon = output[0]['lon']
-    coords = (float(lon), float(lat))
-    return coords
-
-    
 def get_coords(address):
     """
     Use OpenStreetMap to get latitude and longitude coordinates from an address.
@@ -244,9 +221,11 @@ def get_coords(address):
     tuple: (longitude, latitude)
     """
     # Check if the address is in "lat, lon" format
+    # Check if the address is in "lat, lon" or "lat,lon" format
+    address_no_space = address.replace(" ", "")
     try:
-        lat, lon = map(float, address.split(", "))
-        return (float(lon), float(lat))
+        lat, lon = map(float, address_no_space.split(","))
+        return (lon, lat)
     except ValueError:
         pass
     
