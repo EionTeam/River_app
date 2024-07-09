@@ -47,7 +47,7 @@ def find_map(coords):
                 color='red' ,  
             ))
 
-    if len(overlap_station)== 0:
+    if len(overlap_station) == 0:
         #No sampling stations - just plot field  
         fig_cri_multi, num_drops, url_df, time_to_ocean = None, None, None, None
         # assign Graph Objects figure
@@ -99,12 +99,11 @@ def find_map(coords):
         }]
     )
     )
-    return fig, fig_cri_multi, num_drops, url_df, time_to_ocean, CRI_ocean
-
+    return fig, fig_cri_multi, num_drops, url_df, time_to_ocean, CRI_ocean, data_plot
 
 
 def main(coords):
-        fig, fig_cri, num_drops, url_df, time_to_ocean, CRI_ocean  = find_map(coords)
+        fig, fig_cri, num_drops, url_df, time_to_ocean, CRI_ocean, data_plot  = find_map(coords)
         print(CRI_ocean)
         print(CRI_ocean.columns)
         # display streamlit map
@@ -113,9 +112,10 @@ def main(coords):
         # Save GeoDataFrame to a shapefile in a temporary directory
         shapefile_name = "CRI_ocean"
         gdf.to_file("CRI_ocean.shp")
+        data_plot.to_csv("USGS_Gages.csv", index=False)
 
         # Create a zip file of the shapefile components
-        shapefile_components = [f"{shapefile_name}.shp", f"{shapefile_name}.shx", f"{shapefile_name}.dbf", f"{shapefile_name}.prj"]
+        shapefile_components = ["USGS_Gages.csv", f"{shapefile_name}.shp", f"{shapefile_name}.shx", f"{shapefile_name}.dbf", f"{shapefile_name}.prj"]
 
         zip_buffer = io.BytesIO()
         with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
