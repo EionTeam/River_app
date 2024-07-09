@@ -110,11 +110,10 @@ if 'num' not in st.session_state:
 
 
 default_address = 'Vicksburg, Mississippi'
-
-address = st.sidebar.text_input("Enter Location (City, State)", default_address )
 logo = './img/Eion-Logotype.png'
 st.sidebar.image(logo, width=200)
 st.sidebar.title('Oceanic System Loss')
+address = st.sidebar.text_input("Enter Location (City, State)", default_address )
 go_b = st.sidebar.button('Go', key='go')
 rand_b = st.sidebar.button('Random Location', key='rand')
 
