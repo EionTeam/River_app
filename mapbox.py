@@ -147,7 +147,7 @@ def main(coords):
             zip_buffer.seek(0)
 
             # Create a download button for the zip file
-            st.download_button(
+            st.sidebar.download_button(
                 label="Download Ocean CRI",
                 data=zip_buffer,
                 file_name='CRI_ocean.zip',
