@@ -144,8 +144,7 @@ def main(coords):
 
                     # Save GeoDataFrame to a shapefile in a temporary directory
                     
-                    shapefile_path = "CRI_ocean.shp"
-                    gdf.to_file(shapefile_path, driver='ESRI Shapefile')
+                    gdf.to_file("CRI_ocean.shp")
 
                     # Create a zip file of the shapefile components
                     shapefile_components = [f"{shapefile_path}.shp", f"{shapefile_path}.shx", f"{shapefile_path}.dbf", f"{shapefile_path}.prj"]
