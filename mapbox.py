@@ -128,14 +128,13 @@ with col2:
     rand_b = st.button('Random Location', key='rand')
 
 
-
 def main(coords):
         fig, fig_cri, num_drops, url_df, time_to_ocean, CRI_ocean  = find_map(coords)
         print(CRI_ocean)
         print(CRI_ocean.columns)
 
         if fig_cri is None:
-            st.write("##### Note: Not enough sampling stations downstream to compute Ocean CRI")
+            st.write("##### Not enough sampling stations downstream to compute Ocean CRI")
             st.plotly_chart(fig)
         else:
         # display streamlit map
