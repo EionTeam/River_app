@@ -140,7 +140,7 @@ def main(coords):
                     # st.markdown('----')
                     st.markdown('#### DIC trapped in water from this point risks escape to the atmosphere *{}* times. Estimated travel time to ocean after reaching waterway is {} weeks.'.format(num_drops, time_to_ocean.round(1)))
                     # Create a download button
-                    gdf = gpd.GeoDataFrame(CRI_ocean, crs="EPSG:4326")
+                    gdf = gpd.GeoDataFrame(CRI_ocean, geometry='geometry', crs="EPSG:4326")
 
                     # Save GeoDataFrame to a shapefile in a temporary directory
                     shapefile_name = "CRI_ocean"
