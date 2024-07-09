@@ -107,36 +107,37 @@ def main(coords):
         fig, fig_cri, num_drops, url_df, time_to_ocean, CRI_ocean  = find_map(coords)
         print(CRI_ocean)
         print(CRI_ocean.columns)
+        # display streamlit map
+        gdf = gpd.GeoDataFrame(CRI_ocean, geometry='geometry', crs="EPSG:4326")
+
+        # Save GeoDataFrame to a shapefile in a temporary directory
+        shapefile_name = "CRI_ocean"
+        gdf.to_file("CRI_ocean.shp")
+
+        # Create a zip file of the shapefile components
+        shapefile_components = [f"{shapefile_name}.shp", f"{shapefile_name}.shx", f"{shapefile_name}.dbf", f"{shapefile_name}.prj"]
+
+        zip_buffer = io.BytesIO()
+        with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
+            for component in shapefile_components:
+                zip_file.write(component, os.path.basename(component))
+
+        # Reset buffer position to the beginning
+        zip_buffer.seek(0)
+
+        # Create a download button for the zip file
+        st.sidebar.download_button(
+            label="Download Ocean CRI",
+            data=zip_buffer,
+            file_name='CRI_ocean.zip',
+            mime='application/zip',
+        )
 
         if fig_cri is None:
             st.write("##### Not enough sampling stations downstream to compute Ocean CRI")
             st.plotly_chart(fig)
         else:
-        # display streamlit map
-            gdf = gpd.GeoDataFrame(CRI_ocean, geometry='geometry', crs="EPSG:4326")
 
-            # Save GeoDataFrame to a shapefile in a temporary directory
-            shapefile_name = "CRI_ocean"
-            gdf.to_file("CRI_ocean.shp")
-
-            # Create a zip file of the shapefile components
-            shapefile_components = [f"{shapefile_name}.shp", f"{shapefile_name}.shx", f"{shapefile_name}.dbf", f"{shapefile_name}.prj"]
-
-            zip_buffer = io.BytesIO()
-            with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
-                for component in shapefile_components:
-                    zip_file.write(component, os.path.basename(component))
-
-            # Reset buffer position to the beginning
-            zip_buffer.seek(0)
-
-            # Create a download button for the zip file
-            st.sidebar.download_button(
-                label="Download Ocean CRI",
-                data=zip_buffer,
-                file_name='CRI_ocean.zip',
-                mime='application/zip',
-            )
 
             tab1, tab2, tab3  = st.tabs(["Map", "Carbon Retention", "Station Links"])
 
