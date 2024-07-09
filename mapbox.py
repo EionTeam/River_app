@@ -113,9 +113,9 @@ if 'num' not in st.session_state:
 
 
 default_address = 'Vicksburg, Mississippi'
-address = st.text_input("Enter field address to see path of dissolved Carbon from field to ocean (City, State)", default_address )
+address = st.text_input("Enter City, State below:", default_address )
 go_b = st.button('Go', key='go')
-rand_b = st.button('Take me to an interesting point', key='rand')
+rand_b = st.button('Random Location', key='rand')
 
 
 
@@ -125,7 +125,7 @@ def main(coords):
         print(CRI_ocean.columns)
 
         if fig_cri is None:
-            st.write("### No sampling stations downstream or not enough data available - please choose another location or click 'Take me to an interesting point")
+            st.write("## No sampling stations downstream or not enough data available - please choose another location")
             st.plotly_chart(fig)
         else:
         # display streamlit map
