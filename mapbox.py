@@ -162,7 +162,6 @@ def main(coords):
         
 
 
-
 # Streamlit app setup
 default_address = 'Vicksburg, Mississippi'
 logo = './img/Eion-Logotype.png'
@@ -170,7 +169,7 @@ logo = './img/Eion-Logotype.png'
 # Setup sidebar
 st.sidebar.image(logo, width=200)
 st.sidebar.title('Ocean System Inefficiencies')
-address = st.sidebar.text_input("Enter Location (City, State)", default_address )
+address = st.sidebar.text_input("Enter Location (City, State)", default_address)
 
 # Create two columns for the buttons
 col1, col2 = st.sidebar.columns(2)
@@ -182,29 +181,21 @@ with col1:
 with col2:
     rand_b = st.button('Random Location', key='rand')
 
+# Initialize session state variable
+if 'num' not in st.session_state:
+    st.session_state.num = 0
 
-while True:    
-    num = st.session_state.num
-
-    if go_b:
-        coords = get_coords(address)
-        if coords is not None:
-            main(coords)
-        else:
-            st.write("### Address is not within USA or is inaccurate -  please try again or click 'Take me to an interesting point'")
-        st.session_state.num += 2
-        
-        break
-    elif rand_b:
-        coords = choose_field_point()
-        print(coords)
+# Main logic
+if go_b:
+    coords = get_coords(address)
+    if coords is not None:
         main(coords)
- 
-        st.session_state.num += 2
-        
-        break
-    else:        
-        st.stop()
-
-
-    
+    else:
+        st.write("### Address is not within USA or is inaccurate - please try again or click 'Random Location'")
+    st.session_state.num += 2
+elif rand_b:
+    coords = choose_field_point()
+    main(coords)
+    st.session_state.num += 2
+else:
+    st.stop()
