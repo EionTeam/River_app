@@ -130,7 +130,30 @@ def main(coords):
         else:
         # display streamlit map
             tab1, tab2, tab3  = st.tabs(["Map", "Carbon Retention", "Station Links"])
+            gdf = gpd.GeoDataFrame(CRI_ocean, geometry='geometry', crs="EPSG:4326")
 
+            # Save GeoDataFrame to a shapefile in a temporary directory
+            shapefile_name = "CRI_ocean"
+            gdf.to_file("CRI_ocean.shp")
+
+            # Create a zip file of the shapefile components
+            shapefile_components = [f"{shapefile_name}.shp", f"{shapefile_name}.shx", f"{shapefile_name}.dbf", f"{shapefile_name}.prj"]
+
+            zip_buffer = io.BytesIO()
+            with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
+                for component in shapefile_components:
+                    zip_file.write(component, os.path.basename(component))
+
+            # Reset buffer position to the beginning
+            zip_buffer.seek(0)
+
+            # Create a download button for the zip file
+            st.download_button(
+                label="Download Ocean CRI",
+                data=zip_buffer,
+                file_name='CRI_ocean.zip',
+                mime='application/zip',
+            )
             with tab1:
                 
                 st.plotly_chart(fig)
@@ -140,30 +163,6 @@ def main(coords):
                     # st.markdown('----')
                     st.markdown('#### DIC trapped in water from this point risks escape to the atmosphere *{}* times. Estimated travel time to ocean after reaching waterway is {} weeks.'.format(num_drops, time_to_ocean.round(1)))
                     # Create a download button
-                    gdf = gpd.GeoDataFrame(CRI_ocean, geometry='geometry', crs="EPSG:4326")
-
-                    # Save GeoDataFrame to a shapefile in a temporary directory
-                    shapefile_name = "CRI_ocean"
-                    gdf.to_file("CRI_ocean.shp")
-
-                    # Create a zip file of the shapefile components
-                    shapefile_components = [f"{shapefile_name}.shp", f"{shapefile_name}.shx", f"{shapefile_name}.dbf", f"{shapefile_name}.prj"]
-
-                    zip_buffer = io.BytesIO()
-                    with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
-                        for component in shapefile_components:
-                            zip_file.write(component, os.path.basename(component))
-
-                    # Reset buffer position to the beginning
-                    zip_buffer.seek(0)
-
-                    # Create a download button for the zip file
-                    st.download_button(
-                        label="Download Ocean CRI",
-                        data=zip_buffer,
-                        file_name='CRI_ocean.zip',
-                        mime='application/zip',
-                    )
                     st.pyplot(fig_cri)
                     # st.markdown('----')
 
