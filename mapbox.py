@@ -161,6 +161,9 @@ def main(coords):
             st.write("Sources: River data is sourced from USGS's [NLDI API](https://waterdata.usgs.gov/blog/nldi-intro/) and the [GLORICH](https://www.geo.uni-hamburg.de/en/geologie/forschung/aquatische-geochemie/glorich.html) Global River Chemistry Database. Ocean data is sourced from [NOAA.](https://www.ncei.noaa.gov/access/metadata/landing-page/bin/iso?id=gov.noaa.nodc:0220059)")
         
 
+
+
+# Streamlit app setup
 default_address = 'Vicksburg, Mississippi'
 logo = './img/Eion-Logotype.png'
 
@@ -179,24 +182,29 @@ with col1:
 with col2:
     rand_b = st.button('Random Location', key='rand')
 
-if go_b:
-    coords = get_coords(address)
-    if coords is not None:
+
+while True:    
+    num = st.session_state.num
+
+    if go_b:
+        coords = get_coords(address)
+        if coords is not None:
+            main(coords)
+        else:
+            st.write("### Address is not within USA or is inaccurate -  please try again or click 'Take me to an interesting point'")
+        st.session_state.num += 2
+        
+        break
+    elif rand_b:
+        coords = choose_field_point()
+        print(coords)
         main(coords)
-    else:
-        st.write("### Address is not within USA or is inaccurate -  please try again or click 'Take me to an interesting point'")
-    st.session_state.num += 2
+ 
+        st.session_state.num += 2
+        
+        break
+    else:        
+        st.stop()
+
+
     
-    break
-elif rand_b:
-    coords = choose_field_point()
-    print(coords)
-    main(coords)
-
-    st.session_state.num += 2
-    
-    break
-else:        
-    st.stop()
-
-
