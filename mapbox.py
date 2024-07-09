@@ -120,6 +120,7 @@ def main(coords):
         fig, fig_cri, num_drops, url_df, time_to_ocean, CRI_ocean  = find_map(coords)
         print(CRI_ocean)
         print(CRI_ocean.columns)
+
         if fig_cri is None:
             st.write("### No sampling stations downstream or not enough data available - please choose another location or click 'Take me to an interesting point")
             st.plotly_chart(fig)
@@ -136,12 +137,30 @@ def main(coords):
                     # st.markdown('----')
                     st.markdown('#### DIC trapped in water from this point risks escape to the atmosphere *{}* times. Estimated travel time to ocean after reaching waterway is {} weeks.'.format(num_drops, time_to_ocean.round(1)))
                     # Create a download button
-                    # st.download_button(
-                    #     label="Download Ocean CRI",
-                    #     data=CRI_ocean,
-                    #     file_name='CRI_ocean.csv',
-                    #     mime='text/csv',
-                    # )
+                    gdf = gpd.GeoDataFrame(CRI_ocean, crs="EPSG:4326")
+
+                    # Save GeoDataFrame to a shapefile in a temporary directory
+                    shapefile_path = "CRI_ocean"
+                    gdf.to_file(shapefile_path, driver='ESRI Shapefile')
+
+                    # Create a zip file of the shapefile components
+                    shapefile_components = [f"{shapefile_path}.shp", f"{shapefile_path}.shx", f"{shapefile_path}.dbf", f"{shapefile_path}.prj"]
+
+                    zip_buffer = io.BytesIO()
+                    with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
+                        for component in shapefile_components:
+                            zip_file.write(component, os.path.basename(component))
+
+                    # Reset buffer position to the beginning
+                    zip_buffer.seek(0)
+
+                    # Create a download button for the zip file
+                    st.download_button(
+                        label="Download Ocean CRI",
+                        data=zip_buffer,
+                        file_name='CRI_ocean.zip',
+                        mime='application/zip',
+                    )
                     st.pyplot(fig_cri)
                     # st.markdown('----')
 
