@@ -127,14 +127,21 @@ with col1:
 with col2:
     rand_b = st.button('Random Location', key='rand')
 
-    
+# Example usage of the buttons
+if go_b:
+    st.write("Go button clicked!")
+if rand_b:
+    st.write("Random Location button clicked!")
+
+
+
 def main(coords):
         fig, fig_cri, num_drops, url_df, time_to_ocean, CRI_ocean  = find_map(coords)
         print(CRI_ocean)
         print(CRI_ocean.columns)
 
         if fig_cri is None:
-            st.write("## No sampling stations downstream or not enough data available - please choose another location")
+            st.write("#### Note: Not sampling stations downstream or not enough data available")
             st.plotly_chart(fig)
         else:
         # display streamlit map
