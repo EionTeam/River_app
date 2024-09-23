@@ -186,6 +186,8 @@ with col2:
 if 'num' not in st.session_state:
     st.session_state.num = 0
 
+coords = (-90.168, 32.592)
+
 # Main logic
 if go_b:
     coords = get_coords(address)

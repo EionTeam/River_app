@@ -166,7 +166,9 @@ def load_chem( locations):
     path = os.path.join(os.path.dirname(__file__),"data/uschem_pyco2sys.csv")
     uschem = pd.read_csv(path)
     uschem = uschem.rename(columns={'Alkalinity': 'TA', 'Temp_water': 'T'})
-    uschem.loc[:,'RESULT_DATETIME'] = pd.to_datetime(uschem['RESULT_DATETIME'])
+    # uschem.loc[:,'RESULT_DATETIME'] = pd.to_datetime(uschem['RESULT_DATETIME'])
+    uschem['RESULT_DATETIME'] = pd.to_datetime(uschem['RESULT_DATETIME'], errors='coerce')
+
     uschem['Q'] = (uschem['RESULT_DATETIME'].dt.month-1)//3
     uschem['Y'] = (uschem['RESULT_DATETIME'].dt.year)
     # stations = us_geostat[us_geostat['STAT_ID'].isin(catchments['STAT_ID'])]
@@ -317,7 +319,7 @@ def get_river_df_utm(data):
     river_gdf = gpd.GeoDataFrame(river_df , crs='EPSG:4326', geometry=river_df['geometry'] )
     return river_gdf.to_crs(utm)
 
-def snap_points(data,  offset = 1000):
+def snap_points(data,  offset = 5000):
     """Generate the snapped points to the river for stations, uses https://medium.com/@brendan_ward/how-to-leverage-geopandas-for-faster-snapping-of-points-to-lines-6113c94e59aa
     Converts into UTM projected coords and then takes a radius of 1km 
     """
@@ -522,6 +524,8 @@ def get_ocean_nodes(data, df_loc):
     _ ,ocean = river_utm.iloc[-1].geometry.boundary.geoms
     
     df_loc['geometry'] = [Point(lon, lat) for lon, lat in zip(df_loc['Longitude'],df_loc['Latitude']  )]
+    # Ensure that the geometries have a CRS before transforming
+    df_loc = df_loc.set_crs('EPSG:4326')  # Example CRS, modify as needed
     df_utm = df_loc.to_crs(utm)
     final_station =  df_utm.iloc[-1].geometry
     print(final_station)
